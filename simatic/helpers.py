@@ -9,11 +9,11 @@ def get_hf_token():
     return hf_token
 
 
-def get_prompt_template(text_input: str):
+def get_prompt_template(text_input: str, system_prompt: str = None):
     messages = [
         {
             "role": "system",
-            "content": "You are a Captain of the ship, who always responds in the style of a pirate accent",
+            "content": system_prompt
         },
         {"role": "user", "content": text_input},
     ]
