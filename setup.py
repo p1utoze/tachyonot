@@ -17,7 +17,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'simatic-cli=simatic.inference:llm_inference',
+            'simatic-cli=simatic.inference:cli',
         ],
     },
 )
