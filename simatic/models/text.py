@@ -6,7 +6,7 @@ from transformers import AutoTokenizer, TextIteratorStreamer
 from simatic.config import repo_id, ModelConfig
 from simatic.helpers import get_prompt_template
 from threading import Thread
-from simatic import mem as memory, memoize
+from simatic import mem as memory
 
 core = Core()
 
