@@ -1,25 +1,11 @@
 import click
-from optimum.intel.openvino import OVModelForCausalLM
-from openvino import Core
 from optimum.intel.openvino.modeling_decoder import OVBaseDecoderModel
 from transformers import AutoTokenizer, TextIteratorStreamer
 from simatic.config import repo_id, ModelConfig
 from simatic.helpers import get_prompt_template
 from threading import Thread
 from simatic import mem as memory
-
-core = Core()
-
-
-class SimaticModelForCausalLM(OVModelForCausalLM):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.request = None
-
-    def compile(self):
-        print(f"Compiling the model to {self._device} ...")
-        ov_config = {**self.ov_config}
-        self.request = core.compile_model(self.model, self._device, ov_config)
+from simatic.models.modelling import SimaticModelForCausalLM, core
 
 
 @memory.cache(ignore=["my_model"])
@@ -118,11 +104,6 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
 
         thread.join()
 
-
-
-
-def load_model(cls_instance: SimaticBaseModel, is_compile: bool) -> SimaticModelForCausalLM:
-    pass
 
 
 if __name__ == '__main__':
