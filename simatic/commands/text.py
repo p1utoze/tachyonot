@@ -38,14 +38,14 @@ def text_gen(model, prompt, dtype, output_type, system_prompt, **kwargs):
     # assert cache_model.check_call_in_cache(llm, "compiled") == True, "Model not cached"
 
     try:
-        tokenizer = simatic_text.init_tokenizer()
+        simatic_text.init_tokenizer()
     except OSError:
         base_pretrained_model = simatic_text.get_base_model_tokenizer(model)
         print(f"Fallback to default Tokenizer. Using {base_pretrained_model}")
         simatic_text.tokenizer_kwargs["pretrained_model_name_or_path"] = base_pretrained_model
         simatic_text.tokenizer_kwargs.pop("repo_type")
         simatic_text.tokenizer_kwargs.pop("subfolder")
-        tokenizer = simatic_text.init_tokenizer()
+        simatic_text.init_tokenizer()
 
     print()
-    simatic_text.generate(tokenizer=tokenizer, prompt=prompt, out_type=output_type)
+    simatic_text.generate(prompt=prompt, out_type=output_type)
