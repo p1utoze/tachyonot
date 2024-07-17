@@ -1,4 +1,5 @@
 import click
+from time import perf_counter
 from optimum.intel.openvino.modeling_decoder import OVBaseDecoderModel
 from transformers import AutoTokenizer, TextIteratorStreamer
 from simatic.config import repo_id, ModelConfig
@@ -41,6 +42,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         self.tokenizer_kwargs.pop("model_id")
         self.streamer = None
         self.chat = None
+        self.tokenizer = None
         self.system_prompt = None
 
     def __setitem__(self, key, value):
@@ -54,6 +56,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         return self.model_kwargs[item]
 
     def init_model(self, is_compile):
+        start = perf_counter()
         self.model = SimaticModelForCausalLM.from_pretrained(
             **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token
         )
@@ -63,9 +66,10 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
             self.model_kwargs["ov_config"]
         )
         self.model.request = compiled_model.create_infer_request()
+        print(f"{perf_counter() - start} sec")
 
     def init_tokenizer(self):
-        return AutoTokenizer.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(
             **self.tokenizer_kwargs, use_auth_token=self._auth_token, return_dict=True
         )
 
@@ -77,25 +81,25 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
             self.generate_kwargs.pop("max_length")
         return True
 
-    def generate(self, tokenizer, prompt: str, out_type: str):
+    def generate(self, prompt: str, out_type: str):
         messages = get_prompt_template(prompt, self.system_prompt)
-        print(self.model.request)
-        tokenized_chat = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt", return_dict=True)
+        tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt", return_dict=True)
         generation_kwargs = dict(
+            pad_token_id=self.tokenizer.eos_token_id,
             **tokenized_chat,
             **self.generate_kwargs,
         )
         if out_type != "stream":
             output = self.model.generate(**generation_kwargs)
-            generated_response = tokenizer.decode(output[:, tokenized_chat.input_ids.shape[-1]:][0], skip_special_tokens=True)
+            generated_response = self.tokenizer.decode(output[:, tokenized_chat.input_ids.shape[-1]:][0], skip_special_tokens=True)
             click.secho(generated_response, fg="bright_cyan")
             return
 
-        self.stream(tokenizer, generation_kwargs)
+        self.stream(generation_kwargs)
+        click.echo("\n")
 
-
-    def stream(self, tokenizer, gen_kwargs):
-        streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
+    def stream(self, gen_kwargs):
+        streamer = TextIteratorStreamer(self.tokenizer, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
         thread = Thread(target=self.model.generate, kwargs=gen_kwargs)
         thread.start()
@@ -114,12 +118,12 @@ if __name__ == '__main__':
     simatic_text["subfolder"] = "tinyLlama/int4"
 
     # < -------- Load the model (First time) ------------>
-    llm = load_model(cls_instance=simatic_text, is_compile=False)
+    llm = simatic_text.init_model(is_compile=False)
     print(cache_model.check_call_in_cache(llm, "compiled"))
 
     ## <-------- Load the model (from cache) ------------>
-    # llm = load_model(cls_instance=simatic_text, is_compile=False)
-    # print(cache_model.check_call_in_cache(llm, "compiled"))
+    llm = simatic_text.init_model(is_compile=False)
+    print(cache_model.check_call_in_cache(llm, "compiled"))
 
     # ov_model = OVModelForCausalLM.from_pretrained(
     #     model_id=repo_id,
