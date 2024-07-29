@@ -1,4 +1,3 @@
-import os
 import queue
 import sys
 import tempfile
@@ -11,18 +10,32 @@ from scipy import signal
 
 
 class AudioRecorder:
+    """
+    A class to record audio from the CLI directly and transcribe it using the Whisper model.
+    Initialize the AudioRecorder class with the Whisper model.
+    Same as the WhisperModel class, the AudioRecorder class also accepts the same parameters.
+    """
     def __init__(self, **model_params):
-        self.model = WhisperModel(**model_params)
+        """
+        Initialize the AudioRecorder class with the Whisper model.
+        Same as the WhisperModel class, the AudioRecorder class also accepts the same parameters.
+        :param model_params:
+        """
+        self.model: WhisperModel = WhisperModel(**model_params)
         self._q = queue.Queue()
 
-    def transcribe_audio(self, audio_data):
+    def transcribe_audio(self, audio_data, **kwargs):
         # audio_data = np.clip(audio_data, -1, 1)
-        segments, info = self.model.transcribe(audio_data)
+        segments, info = self.model.transcribe(audio_data, **kwargs)
         print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
         return segments
 
     def callback(self, indata, frames, time, status):
-        """This is called (from a separate thread) for each audio block."""
+        """
+        This is called (from a separate thread) for each audio block.
+        """
+
+        # Here the frames and time is used to calculate the duration of the audio block but not used
         if status:
             print(status, file=sys.stderr)
         self._q.put(indata.copy())
@@ -33,7 +46,7 @@ class AudioRecorder:
         reduced_noise = nr.reduce_noise(y=filtered_audio, sr=sample_rate)
         return reduced_noise
 
-    def record_and_transcribe(self, sample_rate=None, channels=1, device=None, filename=None):
+    def record_and_transcribe(self, sample_rate=None, channels=1, device=None, filename=None, language=None):
         try:
             if sample_rate is None:
                 device_info = sd.query_devices(device, 'input')
@@ -55,9 +68,16 @@ class AudioRecorder:
                         file.write(self._q.get())
         except KeyboardInterrupt:
             print('\nRecording finished: ' + repr(filename))
-            print("\nApplying noise reduction...")
-            transcriptions = self.transcribe_audio(filename)
-            os.remove(filename)
+            # print("\nApplying noise reduction...")
+            # audio_data, sample_rate = sf.read(filename)
+            # reduced_noise = self.apply_noise_reduction(audio_data, sample_rate)
+            transcribe_kwargs = {
+                "vad_filter": True,
+                "hallucination_silence_threshold": 5,
+                "language": language
+            }
+            transcriptions = self.transcribe_audio(filename, **transcribe_kwargs)
+
             return transcriptions
         except Exception as e:
             print(f"An error occurred: {str(e)}")
