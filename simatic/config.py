@@ -24,6 +24,9 @@ You are a Friendly help-desk assistant. You must handle any type of customer que
 
 
 class ModelConfig:
+    """
+    Class to handle model configurations and settings if loaded from a YAML file.
+    """
     def __init__(self, file_path: Union[Path, str] = DEFAULT_MODELS_YAML):
         self.yaml_data = safe_load(open(file_path, "r"))
         self._model_config = None
