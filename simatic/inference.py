@@ -6,9 +6,14 @@ from simatic.commands import speech_rec
 
 @click.group()
 def cli():
-    pass
+    """
+    Simatic CLI tool
+    :return: None
+    """
+    pass    # A placeholder for the main function. It does nothing. The subcommands override this function.
 
 
+# Add subcommands to the main command
 cli.add_command(text_gen, name="chat")
 cli.add_command(speech_gen, name="speak")
 cli.add_command(speech_rec, name="listen")
