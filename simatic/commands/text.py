@@ -22,21 +22,23 @@ tokenizer = None
 @click.option("--system-prompt", type=str, default=SYSTEM_PROMPT, help="System prompt to be used")
 @click.argument('prompt', nargs=1)
 def text_gen(model, prompt, dtype, output_type, system_prompt, **kwargs):
-    global llm, tokenizer
     simatic_text.system_prompt = system_prompt
-    simatic_text.generate_kwargs |= kwargs
+    simatic_text.generate_kwargs |= kwargs # Update the generate_kwargs with the kwargs by concatenating them
     click.secho(f"Model: {model}, Prompt: {prompt}, Data type: {dtype}", bg="bright_cyan", fg="black")
     simatic_text.load_model_config(model)
     simatic_text["subfolder"] = f"{model}/{dtype}"
 
+    # Check if the model repo exists or is public
     try:
         simatic_text.init_model(is_compile=False)
     except RepositoryNotFoundError:
         simatic_text._auth_token = get_hf_token()
         simatic_text.init_model(is_compile=False)
 
+    # Check if the model is cached and if not, cache it
     # assert cache_model.check_call_in_cache(llm, "compiled") == True, "Model not cached"
 
+    # Check if the tokenizer repo exists or is public
     try:
         simatic_text.init_tokenizer()
     except OSError:
