@@ -2,7 +2,7 @@ from optimum.intel.openvino.modeling_decoder import OVBaseDecoderModel
 import copy
 import warnings
 from pathlib import Path
-from typing import  Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 import logging
 import numpy as np
 import torch
@@ -27,10 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 class SimaticModelForCausalLM(OVBaseDecoderModel, GenerationMixin):
+    """
+    This class is a wrapper class and is the improved version of Optimum Intel's OpenVINO model for Causal Language Modeling.
+    """
     export_feature = "text-generation"
     auto_model_class = AutoModelForCausalLM
 
-    def compile(self):
+    def compile(self) -> None:
         print(f"Compiling the model to {self._device} ...")
         ov_config = {**self.ov_config}
         self.request = core.compile_model(self.model, self._device, ov_config)

@@ -6,11 +6,17 @@ from simatic.config import repo_id, ModelConfig
 from simatic.helpers import get_prompt_template
 from threading import Thread
 from simatic import mem as memory
-from simatic.models.modelling import SimaticModelForCausalLM, core
+from simatic.models.llm import SimaticModelForCausalLM, core
 
 
 @memory.cache(ignore=["my_model"])
 def cache_model(my_model: SimaticModelForCausalLM, model_status="compiled") -> bytes:
+    """
+    Cache the compiled model if it is not already in the cache and return the model as bytes.
+    :param my_model: (SimaticModelForCausalLM) The model instance to cache
+    :param model_status: (bool) The status of the model
+    :return: byte
+    """
     my_model.compile()
     print(f"Model status: {model_status}")
     return my_model.request.export_model()
@@ -56,6 +62,14 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         return self.model_kwargs[item]
 
     def init_model(self, is_compile):
+        """
+        Initialize the model using our custom model class.
+        pass is_compile=True to compile the model.
+        Import the compiled model from the cache.
+        Will run the cache function if the model is not in the cache.
+        :param is_compile:
+        :return:
+        """
         start = perf_counter()
         self.model = SimaticModelForCausalLM.from_pretrained(
             **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token
@@ -82,6 +96,12 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         return True
 
     def generate(self, prompt: str, out_type: str):
+        """
+        Generate text from the model using the prompt.
+        :param prompt: (str) The prompt to generate text from. It's the user input.
+        :param out_type: (str) The output type. Either "stream" or "no stream"
+        :return: None
+        """
         messages = get_prompt_template(prompt, self.system_prompt)
         tokenized_chat = self.tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt", return_dict=True)
         generation_kwargs = dict(
@@ -109,8 +129,11 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         thread.join()
 
 
-
 if __name__ == '__main__':
+    """
+    This entrypoint is used to test the SimaticBaseModel class and its methods.
+    Also used for testing the cache_model function to check Cache HIT/MISS.
+    """
     # import os
     # os.environ["OPENVINO_LOG_LEVEL"] = "3"
     simatic_text = SimaticBaseModel()
