@@ -51,6 +51,8 @@ Thank you for considering contributing to MyPythonCLI! We welcome contributions 
     $ simatic-cli --help
     ```
    
+> NOTE: If you want to use virtualenv instead of poetry, refer to the [Getting Started](README.md#getting-started) section 
+   
 ### Project Structure
 ```shell
 ./          # Project root  
