@@ -4,6 +4,7 @@ from simatic.helpers import get_hf_token
 from simatic.config import default_dtype, SYSTEM_PROMPT
 from huggingface_hub.utils._errors import RepositoryNotFoundError
 
+from simatic.models.rag import RAG
 
 llm = None
 tokenizer = None
@@ -20,11 +21,16 @@ tokenizer = None
 @click.option("--no-stream", "output_type", flag_value="no_stream", help="Flag to disable streaming mode")
 @click.option("--max-new-tokens", type=int, default=512, help="Maximum number of new tokens to generate")
 @click.option("--system-prompt", type=str, default=SYSTEM_PROMPT, help="System prompt to be used")
+@click.option("--data-path", type=str, default=None, help="Path to the data folder for context retrieval")
 @click.argument('prompt', nargs=1)
-def text_gen(model, prompt, dtype, output_type, system_prompt, **kwargs):
+def text_gen(model, data_path, prompt, dtype, output_type, system_prompt, **kwargs):
     simatic_text.system_prompt = system_prompt
     simatic_text.generate_kwargs |= kwargs # Update the generate_kwargs with the kwargs by concatenating them
+    rag = RAG()
     click.secho(f"Model: {model}, Prompt: {prompt}, Data type: {dtype}", bg="bright_cyan", fg="black")
+    if data_path:
+        prompt = rag.retrieve(data_path=data_path, query=prompt)
+
     simatic_text.load_model_config(model)
     simatic_text["subfolder"] = f"{model}/{dtype}"
 
