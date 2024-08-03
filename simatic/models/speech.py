@@ -15,6 +15,8 @@ class AudioRecorder:
     Initialize the AudioRecorder class with the Whisper model.
     Same as the WhisperModel class, the AudioRecorder class also accepts the same parameters.
     """
+    _instance = None
+
     def __init__(self, **model_params):
         """
         Initialize the AudioRecorder class with the Whisper model.
@@ -23,6 +25,11 @@ class AudioRecorder:
         """
         self.model: WhisperModel = WhisperModel(**model_params)
         self._q = queue.Queue()
+
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls)
+        return cls._instance
 
     def transcribe_audio(self, audio_data, **kwargs):
         # audio_data = np.clip(audio_data, -1, 1)
