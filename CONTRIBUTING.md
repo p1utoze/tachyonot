@@ -70,7 +70,7 @@ Thank you for considering contributing to MyPythonCLI! We welcome contributions 
 │   │   └── speech.py   # Custom class for Whisper Speech model
 │   │
 │   ├── __init__.py     # Entry point for the package
-│   ├── inference.py    # Entrypoint for CLI commands
+│   ├── __main__.py    # Entrypoint for CLI commands
 │   ├── helpers.py      # Helper functions
 │   └── config.py       # Configuration settings
 ```
