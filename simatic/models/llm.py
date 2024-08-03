@@ -1,13 +1,20 @@
-from optimum.intel.openvino.modeling_decoder import OVBaseDecoderModel
 import copy
+import logging
 import warnings
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
-import logging
+
 import numpy as np
+import openvino.properties as props
+import optimum.intel.openvino.modeling_decoder as model_decoders
 import torch
 from huggingface_hub.constants import HUGGINGFACE_HUB_CACHE
 from openvino.runtime import Core, Tensor, Type
+from optimum.intel.openvino.configuration import _DEFAULT_4BIT_CONFIGS, OVConfig, OVWeightQuantizationConfig, \
+    _check_default_4bit_configs
+from optimum.intel.openvino.utils import ONNX_WEIGHTS_NAME, OV_TO_NP_TYPE, OV_XML_FILE_NAME
+from optimum.intel.utils import is_nncf_available, is_transformers_version
+from optimum.intel.utils.modeling_utils import MULTI_QUERY_ATTN_MODELS
 from transformers import AutoModelForCausalLM, PretrainedConfig
 from transformers.generation import GenerationMixin
 from transformers.generation.configuration_utils import GenerationConfig
@@ -16,27 +23,23 @@ from transformers.generation.stopping_criteria import StoppingCriteriaList
 from transformers.generation.utils import GenerateOutput, GenerationMode
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from optimum.intel.utils import is_nncf_available, is_transformers_version
-from optimum.intel.utils.modeling_utils import MULTI_QUERY_ATTN_MODELS
-from optimum.intel.openvino.configuration import _DEFAULT_4BIT_CONFIGS, OVConfig, OVWeightQuantizationConfig, _check_default_4bit_configs
-from optimum.intel.openvino.utils import ONNX_WEIGHTS_NAME, OV_TO_NP_TYPE, OV_XML_FILE_NAME, STR_TO_OV_TYPE
-
 core = Core()
-
+core.set_property({props.enable_mmap: True})
 logger = logging.getLogger(__name__)
 
 
-class SimaticModelForCausalLM(OVBaseDecoderModel, GenerationMixin):
+class SimaticModelForCausalLM(model_decoders.OVBaseDecoderModel, GenerationMixin):
     """
     This class is a wrapper class and is the improved version of Optimum Intel's OpenVINO model for Causal Language Modeling.
     """
     export_feature = "text-generation"
     auto_model_class = AutoModelForCausalLM
 
-    def compile(self) -> None:
+    def compile(self):
         print(f"Compiling the model to {self._device} ...")
         ov_config = {**self.ov_config}
-        self.request = core.compile_model(self.model, self._device, ov_config)
+        core.set_property({props.cache_dir: ov_config.pop("CACHE_DIR")})
+        return core.compile_model(self.model, self._device, ov_config)
 
     def prepare_inputs(
         self,
@@ -414,7 +417,6 @@ class SimaticModelForCausalLM(OVBaseDecoderModel, GenerationMixin):
 
         model = cls.load_model(model_cache_path)
 
-        model_type = config.model_type.replace("_", "-")
         init_cls = cls
 
         if isinstance(quantization_config, dict) and quantization_config == {"bits": 4}:
