@@ -1,13 +1,12 @@
 import click
-from simatic.models import simatic_text
+from simatic.models import SimaticBaseModel
 from simatic.helpers import get_hf_token
 from simatic.config import default_dtype, SYSTEM_PROMPT
 from huggingface_hub.utils._errors import RepositoryNotFoundError
 
 from simatic.models.rag import RAG
 
-llm = None
-tokenizer = None
+simatic_text = SimaticBaseModel()
 
 
 @click.command()
