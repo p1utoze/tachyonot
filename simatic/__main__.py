@@ -1,7 +1,8 @@
 import click
-from simatic.commands import text_gen
-from simatic.commands import speech_gen
-from simatic.commands import speech_rec
+
+import simatic.commands.text as text
+import simatic.commands.tts as tts
+import simatic.commands.stt as stt
 
 
 @click.group()
@@ -14,9 +15,8 @@ def cli():
 
 
 # Add subcommands to the main command
-cli.add_command(text_gen, name="chat")
-cli.add_command(speech_gen, name="speak")
-cli.add_command(speech_rec, name="listen")
+cli.add_command(text.text_gen, name="chat")
+cli.add_command(tts.speech_gen, name="speak")
+cli.add_command(stt.asr, name="listen")
 
-if __name__ == '__main__':
-    cli()
+cli()
