@@ -5,24 +5,18 @@ from transformers import AutoTokenizer, TextIteratorStreamer
 from simatic.config import repo_id, ModelConfig
 from simatic.helpers import get_prompt_template
 from threading import Thread
-from simatic import mem as memory
-from simatic.models.llm import SimaticModelForCausalLM, core
-
-
-@memory.cache(ignore=["my_model"])
-def cache_model(my_model: SimaticModelForCausalLM, model_status="compiled") -> bytes:
-    """
-    Cache the compiled model if it is not already in the cache and return the model as bytes.
-    :param my_model: (SimaticModelForCausalLM) The model instance to cache
-    :param model_status: (bool) The status of the model
-    :return: byte
-    """
-    my_model.compile()
-    print(f"Model status: {model_status}")
-    return my_model.request.export_model()
+from simatic.models.llm import SimaticModelForCausalLM
+from simatic.config import CACHE_DIR
 
 
 class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
+    _instance = None
+
+    def __new__(cls):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls)
+        return cls._instance
+
     def __init__(self):
         self.model_config = super().__init__()
         self.request = None
@@ -32,12 +26,14 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
             "repo_type": "private",
             "device_map": "auto",
             "subfolder": None,
+            "cache_dir": CACHE_DIR,
             "ov_config": {
                 "ENABLE_CPU_PINNING": True,
                 "EXECUTION_MODE_HINT": "ACCURACY",
                 "PERFORMANCE_HINT": "LATENCY",
                 "DYNAMIC_QUANTIZATION_GROUP_SIZE": "32",
                 "KV_CACHE_PRECISION": "bf16",
+                "CACHE_DIR": CACHE_DIR / "ov_cache",
             }
         }
         self.generate_kwargs = dict()
@@ -61,6 +57,17 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
     def __getitem__(self, item):
         return self.model_kwargs[item]
 
+    def compile_model(self, model_status="compiled"):
+        """
+        Cache the compiled model if it is not already in the cache and return the model as bytes.
+        :param my_model: (SimaticModelForCausalLM) The model instance to cache
+        :param model_status: (bool) The status of the model
+        :return: byte
+        """
+        model = self.model.compile()
+        print(f"Model status: {model_status}")
+        return model
+
     def init_model(self, is_compile):
         """
         Initialize the model using our custom model class.
@@ -71,18 +78,17 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         :return:
         """
         start = perf_counter()
-        self.model = SimaticModelForCausalLM.from_pretrained(
-            **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token
+        self.model: SimaticModelForCausalLM = SimaticModelForCausalLM.from_pretrained(
+            **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token, local_files_only=True
         )
-        compiled_model = core.import_model(
-            cache_model(self.model, "compiled"),
-            self.model._device,
-            self.model_kwargs["ov_config"]
-        )
-        self.model.request = compiled_model.create_infer_request()
+        self.model.request = self.compile_model("compiled").create_infer_request()
         print(f"{perf_counter() - start} sec")
 
     def init_tokenizer(self):
+        """
+        Initialize the tokenizer using the AutoTokenizer class from the transformers library.
+        :return:
+        """
         self.tokenizer = AutoTokenizer.from_pretrained(
             **self.tokenizer_kwargs, use_auth_token=self._auth_token, return_dict=True
         )
@@ -134,31 +140,11 @@ if __name__ == '__main__':
     This entrypoint is used to test the SimaticBaseModel class and its methods.
     Also used for testing the cache_model function to check Cache HIT/MISS.
     """
-    # import os
-    # os.environ["OPENVINO_LOG_LEVEL"] = "3"
     simatic_text = SimaticBaseModel()
+    simatic_text3 = SimaticBaseModel()
+    print(id(simatic_text) == id(simatic_text3))
     simatic_text._auth_token = input("Please enter your Hugging Face API token: ")
     simatic_text["subfolder"] = "tinyLlama/int4"
-
-    # < -------- Load the model (First time) ------------>
-    llm = simatic_text.init_model(is_compile=False)
-    print(cache_model.check_call_in_cache(llm, "compiled"))
-
-    ## <-------- Load the model (from cache) ------------>
-    llm = simatic_text.init_model(is_compile=False)
-    print(cache_model.check_call_in_cache(llm, "compiled"))
-
-    # ov_model = OVModelForCausalLM.from_pretrained(
-    #     model_id=repo_id,
-    #     repo_type="private",
-    #     device_map="auto",
-    #     subfolder=simatic_text["subfolder"],
-    #     use_auth_token=simatic_text._auth_token
-    # )
-
-    ## < ------- Validate the cached model ------------>
-    # infer_req = simatic_model.request.create_infer_request()
-    # assert infer_req.input_tensors == ov_model.request.input_tensors, "Input tensors not equal"
-    # assert infer_req.output_tensors == ov_model.request.output_tensors, "Output tensors not equal"
-
-
+    simatic_text2 = SimaticBaseModel()
+    simatic_text2["subfolder"] = "tinyLlama/int8"
+    print(id(simatic_text2) == id(simatic_text))
