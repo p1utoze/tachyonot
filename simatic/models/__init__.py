@@ -5,5 +5,5 @@ This module is the entry point for creating a new instance of the SimaticBaseMod
 from .text import SimaticBaseModel
 from .speech import AudioRecorder
 
-simatic_text = SimaticBaseModel()
-__all__ = ["simatic_text", "AudioRecorder"]
+
+__all__ = ["SimaticBaseModel", "AudioRecorder"]
