@@ -1,3 +1,6 @@
+# distutils: language=c
+# cython: language_level=3
+
 import click
 from time import perf_counter
 from optimum.intel.openvino.modeling_decoder import OVBaseDecoderModel
@@ -42,8 +45,6 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         self.tokenizer_kwargs.pop("device_map")
         self.tokenizer_kwargs["pretrained_model_name_or_path"] = self.model_kwargs["model_id"]
         self.tokenizer_kwargs.pop("model_id")
-        self.streamer = None
-        self.chat = None
         self.tokenizer = None
         self.system_prompt = None
 
@@ -57,7 +58,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
     def __getitem__(self, item):
         return self.model_kwargs[item]
 
-    def compile_model(self, model_status="compiled"):
+    def compile_model(self, model_status: str = "compiled"):
         """
         Cache the compiled model if it is not already in the cache and return the model as bytes.
         :param my_model: (SimaticModelForCausalLM) The model instance to cache
@@ -68,7 +69,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         print(f"Model status: {model_status}")
         return model
 
-    def init_model(self, is_compile):
+    def init_model(self, is_compile) -> None:
         """
         Initialize the model using our custom model class.
         pass is_compile=True to compile the model.
@@ -79,12 +80,12 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         """
         start = perf_counter()
         self.model: SimaticModelForCausalLM = SimaticModelForCausalLM.from_pretrained(
-            **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token, local_files_only=True
+            **self.model_kwargs, compile=is_compile, use_auth_token=self._auth_token
         )
         self.model.request = self.compile_model("compiled").create_infer_request()
         print(f"{perf_counter() - start} sec")
 
-    def init_tokenizer(self):
+    def init_tokenizer(self) -> None:
         """
         Initialize the tokenizer using the AutoTokenizer class from the transformers library.
         :return:
@@ -101,7 +102,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
             self.generate_kwargs.pop("max_length")
         return True
 
-    def generate(self, prompt: str, out_type: str):
+    def generate(self, prompt: str, out_type: str = None) -> None:
         """
         Generate text from the model using the prompt.
         :param prompt: (str) The prompt to generate text from. It's the user input.
@@ -124,7 +125,7 @@ class SimaticBaseModel(ModelConfig, OVBaseDecoderModel):
         self.stream(generation_kwargs)
         click.echo("\n")
 
-    def stream(self, gen_kwargs):
+    def stream(self, gen_kwargs: dict) -> None:
         streamer = TextIteratorStreamer(self.tokenizer, skip_special_tokens=True)
         gen_kwargs["streamer"] = streamer
         thread = Thread(target=self.model.generate, kwargs=gen_kwargs)
