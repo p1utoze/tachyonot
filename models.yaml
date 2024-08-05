@@ -17,6 +17,16 @@ models:
         - int8
         - int4
 
+    gpt2:
+      hfId: openai-community/gpt2
+      dtypes:
+        - int4
+
+    robertaBaseSquad2:
+        hfId: deepset/roberta-base-squad2
+        dtypes:
+            - int4
+
     qwen:
       hfId: Qwen/Qwen2-0.5B
       dtypes:
