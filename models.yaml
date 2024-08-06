@@ -16,17 +16,20 @@ models:
         - fp16
         - int8
         - int4
-
-    gpt2:
-      hfId: openai-community/gpt2
+    laMiniCerebras590M:
+      hfId: MBZUAI/LaMini-Cerebras-590M
       dtypes:
+        - fp32
+        - fp16
+        - int8
         - int4
-
-    robertaBaseSquad2:
-        hfId: deepset/roberta-base-squad2
+    opt350M:
+        hfId: facebook/opt-350M
         dtypes:
             - int4
-
+            - int8
+            - fp16
+            - fp32
     qwen:
       hfId: Qwen/Qwen2-0.5B
       dtypes:
@@ -34,7 +37,6 @@ models:
         - fp16
         - int8
         - int4
-
     Phi3Mini-4K:
       hfId: unsloth/Phi-3-mini-4k-instruct
       dtypes:
