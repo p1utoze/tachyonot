@@ -46,5 +46,5 @@ def text_gen(model, data_path, prompt, dtype, output_type, system_prompt, **kwar
 
 
 if __name__ == "__main__":
-    text_gen("tinyLlama", None, "What is Augmented Reality?", default_dtype, "stream", SYSTEM_PROMPT,
-             max_new_tokens=20, temperature=0.1, do_sample=True, max_length=None)
+    text_gen("opt350M", None, "What is Augmented Reality?", "int4", "stream", SYSTEM_PROMPT,
+             max_new_tokens=256, temperature=0.1, do_sample=True, max_length=None)
