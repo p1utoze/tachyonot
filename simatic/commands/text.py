@@ -3,27 +3,28 @@ from simatic.models import SimaticBaseModel
 from simatic.helpers import get_hf_token
 from simatic.config import default_dtype, SYSTEM_PROMPT
 from huggingface_hub.utils._errors import RepositoryNotFoundError
-
 from simatic.models.rag import RAG
 
 simatic_text = SimaticBaseModel()
 
 
-@click.command()
-@click.option('--model', '-m', type=click.Choice(simatic_text.models_), help='Model name', required=True)
-@click.option('--hf_token', "-o", type=str, expose_value=False, envvar="HF_TOKEN")
-@click.option('--dtype', "-d", type=str, default=default_dtype, help='Model data type')
-@click.option("--temperature", "-t", type=float, default=0.5, help="Temperature for sampling")
-@click.option("--do-sample", is_flag=True, help="Flag to enable sampling")
-@click.option("--max-length", "-l", type=int, default=None, help="Maximum length of the generated text")
-@click.option("--stream", "output_type", flag_value="stream", help="Flag to enable streaming mode")
-@click.option("--no-stream", "output_type", flag_value="no_stream", help="Flag to disable streaming mode")
-@click.option("--max-new-tokens", type=int, default=512, help="Maximum number of new tokens to generate")
-@click.option("--system-prompt", type=str, default=SYSTEM_PROMPT, help="System prompt to be used")
-@click.option("--data-path", type=str, default=None, help="Path to the data folder for context retrieval")
-@click.argument('prompt', nargs=1)
-def text_gen(model, data_path, prompt, dtype, output_type, system_prompt, **kwargs):
+def chat_command(subparsers):
+    chat_parser = subparsers.add_parser("chat", help="Chat with the AI model")
+    chat_parser.add_argument('--model', '-m', choices=simatic_text.models_, help='Model name', required=True)
+    chat_parser.add_argument('--dtype', "-d", type=str, default=default_dtype, help='Model data type')
+    chat_parser.add_argument("--temperature", "-t", type=float, default=0.5, help="Temperature for sampling")
+    chat_parser.add_argument("--do-sample", action="store_true", help="Flag to enable sampling")
+    chat_parser.add_argument("--max-length", "-l", type=int, default=None, help="Maximum length of the generated text")
+    chat_parser.add_argument("--stream", action="store_true", help="Flag to enable streaming mode")
+    chat_parser.add_argument("--max-new-tokens", type=int, default=512, help="Maximum number of new tokens to generate")
+    chat_parser.add_argument("--system-prompt", type=str, default=SYSTEM_PROMPT, help="System prompt to be used")
+    chat_parser.add_argument("--data-path", type=str, default=None, help="Path to the data folder for context retrieval")
+    chat_parser.add_argument('prompt', nargs='?')
+
+
+def text_gen(model, data_path, prompt, dtype, stream, system_prompt, **kwargs):
     simatic_text.system_prompt = system_prompt
+    kwargs.pop("subcommand")
     simatic_text.generate_kwargs |= kwargs # Update the generate_kwargs with the kwargs by concatenating them
     rag = RAG()
     click.secho(f"Model: {model}, Prompt: {prompt}, Data type: {dtype}", bg="bright_cyan", fg="black")
@@ -55,4 +56,4 @@ def text_gen(model, data_path, prompt, dtype, output_type, system_prompt, **kwar
         simatic_text.init_tokenizer()
 
     print()
-    simatic_text.generate(prompt=prompt, out_type=output_type)
+    simatic_text.generate(prompt=prompt, out_type=stream)

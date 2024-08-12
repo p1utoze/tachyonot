@@ -1,21 +1,31 @@
 import click
 from simatic.models import AudioRecorder
 from simatic.models.speech import get_list_of_audio_devices
+from argparse import Action
 
 MODELS = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "distil-small.en", "medium", "medium.en", "distil-medium.en", "large-v1", "large-v2", "large-v3", "large", "distil-large-v2", "distil-large-v3"]
 
 devices = get_list_of_audio_devices()
 
-audio_recorder = AudioRecorder(model_size_or_path="base", device="cpu", compute_type="int8_float32")
+audio_recorder = AudioRecorder(model_size_or_path="base.en", device="cpu", compute_type="int8_float32")
 
 
-def list_devices_callback(ctx, param, value):
+def list_devices_callback(value):
+    class customAction(Action):
+        def __call__(self, parser, args, values, option_string=None):
+            print(value)
+            print("Available audio devices:")
+            print(args, values)
+            setattr(args, self.dest, values)
+    return customAction
+
+
+def list_devices_callback(value):
     if not value:
         return
     print("Available audio devices:")
     for device in devices:
         print(f"{device['index']} --> {device['name']}, {device['max_input_channels']} channels, {device['default_samplerate']} Hz")
-    ctx.exit()
 
 
 def device_callback(ctx, param, value):
@@ -33,15 +43,18 @@ def device_callback(ctx, param, value):
     return value
 
 
-@click.command()
-@click.option('-f', '--filename', type=str, default=None, help='audio file to store recording to')
-@click.option('-ld', '--list-devices', is_flag=True, help='show list of audio@ devices and exit', callback=list_devices_callback)
-@click.option('-d', '--device', type=int, required=True, help='input device (numeric ID or substring)', callback=device_callback)
-@click.option('-m', '--model', type=click.Choice(MODELS), default="tiny", help='Whisper model size')
-@click.option('-r', '--samplerate', type=int, default=None, help='sampling rate')
-@click.option('-c', '--channels', type=int, default=1, help='number of input channels')
-@click.option('-t', '--subtype', type=str, help='`sound` file subtype (e.g. "PCM_24")')
-@click.option("-l", "--language", type=str, default=None, help="Enter the language in ISO Code format with 2 character")
+def listen_command(subparsers):
+    listen_parser = subparsers.add_parser("listen", help="Listen to the microphone and transcribe speech")
+    listen_parser.add_argument('-f', '--filename', type=str, default=None, help='audio file to store recording to')
+    listen_parser.add_argument('-ld', '--list-devices', help='show list of audio@ devices and exit', action=list_devices_callback(False))
+    listen_parser.add_argument('-d', '--device', type=int, required=True, help='input device (numeric ID or substring)', callback=device_callback)
+    listen_parser.add_argument('-m', '--model', choices=MODELS, default="tiny", help='Whisper model size')
+    listen_parser.add_argument('-r', '--samplerate', type=int, default=None, help='sampling rate')
+    listen_parser.add_argument('-c', '--channels', type=int, default=1, help='number of input channels')
+    listen_parser.add_argument('-t', '--subtype', type=str, help='`sound` file subtype (e.g. "PCM_24")')
+    listen_parser.add_argument("-l", "--language", type=str, default=None, help="Enter the language in ISO Code format with 2 character")
+
+
 def asr(filename, device, list_devices, model, samplerate, channels, subtype, language):
     try:
         transcriptions = audio_recorder.record_and_transcribe(device=device, filename=filename, sample_rate=samplerate, channels=channels, language=language)

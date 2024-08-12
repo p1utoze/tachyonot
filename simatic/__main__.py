@@ -1,22 +1,29 @@
-import click
+import argparse
+import os
 
-import simatic.commands.text as text
-import simatic.commands.tts as tts
-import simatic.commands.stt as stt
+import simatic.commands as ai_commands
+
+parser = argparse.ArgumentParser(description="Simatic CLI tool")
+subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
+# listen_parser = subparsers.add_parser("listen", help="Listen to the audio and transcribe it")
+# speak_parser = subparsers.add_parser("speak", help="Speak to the AI model")
 
 
-@click.group()
 def cli():
-    """
-    Simatic CLI tool
-    :return: None
-    """
-    pass    # A placeholder for the main function. It does nothing. The subcommands override this function.
 
+    ai_commands.chat_command(subparsers)
+    args = parser.parse_args()
 
-# Add subcommands to the main command
-cli.add_command(text.text_gen, name="chat")
-cli.add_command(tts.speech_gen, name="speak")
-cli.add_command(stt.asr, name="listen")
+    if args.subcommand == "chat":
+        if os.getenv("HF_TOKEN") is None:
+            parser.print_help()
+            parser.error("Please set the HF_TOKEN environment variable")
 
-cli()
+        from simatic.commands.text import text_gen
+        print("Chatting with the AI model")
+        text_gen(**vars(args))
+    else:
+        print("Invalid subcommand")
+
+    # ai_commands.text_gen(args)
+# A placeholder for the main function. It does nothing. The subcommands override this function.

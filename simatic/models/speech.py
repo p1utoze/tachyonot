@@ -2,11 +2,9 @@ import queue
 import sys
 import tempfile
 
-import noisereduce as nr
 import sounddevice as sd
 import soundfile as sf
 from faster_whisper import WhisperModel
-from scipy import signal
 
 
 class AudioRecorder:
@@ -46,12 +44,6 @@ class AudioRecorder:
         if status:
             print(status, file=sys.stderr)
         self._q.put(indata.copy())
-
-    def apply_noise_reduction(self, audio_data, sample_rate):
-        sos = signal.butter(10, [300, 3000], 'bandpass', fs=sample_rate, output='sos')
-        filtered_audio = signal.sosfilt(sos, audio_data)
-        reduced_noise = nr.reduce_noise(y=filtered_audio, sr=sample_rate)
-        return reduced_noise
 
     def record_and_transcribe(self, sample_rate=None, channels=1, device=None, filename=None, language=None):
         try:
