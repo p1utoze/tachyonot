@@ -45,6 +45,39 @@ models:
         - int8
         - int4
 
+    pythia160M:
+      hfId: EleutherAI/pythia-160m
+      dtypes:
+        - fp32
+        - fp16
+        - int8
+        - int4
+
+    smolLlama:
+      hfId: BEE-spoke-data/smol_llama-220M-GQA
+      dtypes:
+        - fp32
+        - fp16
+        - int8
+        - int4
+
+
+    smolLlamaInstruct135M:
+      hfid: HuggingFaceTB/SmolLM-135M-Instruct
+      dtypes:
+        - fp32
+        - fp16
+        - int8
+        - int4
+
+    smolLlamaInstruct:
+      hfid: HuggingFaceTB/SmolLM-135M-Instruct
+      dtypes:
+        - fp32
+        - fp16
+        - int8
+        - int4
+
   text2speech:
     fb-mms-tts:
       hfId: facebook/mms-tts-eng
