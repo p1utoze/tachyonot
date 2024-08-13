@@ -2,8 +2,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStream
 from threading import Thread
 
 
-class SimaticLLM:
-    def __init__(self, checkpoint="Qwen/Qwen1.5-0.5B-Chat", device="cpu"):
+class BaseLLM:
+    def __init__(self, checkpoint="Felladrin/Llama-160M-Chat-v1", device="cpu"):
         self.tokenizer = AutoTokenizer.from_pretrained(checkpoint)
         self.model = AutoModelForCausalLM.from_pretrained(checkpoint).to(device)
         self.device = device
@@ -15,12 +15,12 @@ class SimaticLLM:
             return self._generate(messages, max_new_tokens, temperature, top_p, do_sample)
 
     def _generate(self, messages, max_new_tokens, temperature, top_p, do_sample, device="cpu"):
-        text = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(device)
+        # text = self.tokenizer.apply_chat_template(
+        #     messages,
+        #     tokenize=False,
+        #     add_generation_prompt=True
+        # )
+        model_inputs = self.tokenizer(messages, return_tensors="pt").to(device)
         generated_ids = self.model.generate(
             **model_inputs,
             pad_token_id=self.tokenizer.eos_token_id,
@@ -62,8 +62,16 @@ class SimaticLLM:
 
 
 if __name__ == "__main__":
-    simatic_llm = SimaticLLM()
-    messages = [{"role": "user", "content": "What is Augmented reality?"}]
-    response = simatic_llm.generate(messages, max_new_tokens=256, device="cpu", temperature=0.1, top_p=0.92,
+    simatic_llm = BaseLLM()
+    messages = [
+        {"role": "system",
+         "content": "You are a Friendly help-desk assistant. You must handle any type of customer questions diligently. If unambigious, ask for more information. If you are unable to answer, escalate to a human agent. The Context will be given to you. Use it to answer the users questions."},
+        {"role": "user", "content": "What is augmented reality"}
+    ]
+    response = simatic_llm.generate(messages,
+                                    max_new_tokens=256,
+                                    device="cpu",
+                                    temperature=0.1,
+                                    top_p=0.92,
                                     do_sample=True)
     print("Response:", response)

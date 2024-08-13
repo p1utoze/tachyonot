@@ -1,0 +1,7 @@
+data
+dist
+model
+poetry.lock
+.idea
+**/__pycache__/
+storage
