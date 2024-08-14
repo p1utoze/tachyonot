@@ -5,12 +5,10 @@ storage_path: "storage"
 chunk_size: 1024
 embedding_dimension: 384
 
-max_new_tokens: 1024
-top_k: 2
-top_p: 0.8
-temperature: 0.6
-context_window: 3900
-
-data_path: "data"
+max_new_tokens: 512
+top_k: 1
+top_p: 0.92
+temperature: 0.7
+context_window: 2048
 
 log_level: "INFO"

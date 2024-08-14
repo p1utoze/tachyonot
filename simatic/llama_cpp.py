@@ -147,8 +147,10 @@ if __name__ == "__main__":
         rag = SimaticLLM()
         history = [
             {"role": "system",
-             "content": "You a chatbot who has to answer to questions according to the context given. Only reply with "
-                        "responses and nothing else."},
+             "content": "You are assisting HMI users and HRs in helping out with their tasks by providing them with "
+                        "the necessary information from user manuals or resumes."
+                        "Your have to respond to their queries with the context information given. Generate answers "
+                        "to the 'Current User Query' alone."},
         ]
         result = rag.invoke(
             "How does Peterson's algorithm work?",
