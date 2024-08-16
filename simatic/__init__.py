@@ -1,1 +1,1 @@
-from .llama_cpp import SimaticLLM
+from .llama import SimaticLLM
