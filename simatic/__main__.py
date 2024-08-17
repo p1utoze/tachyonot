@@ -1,15 +1,22 @@
-import sys
-from .commands.chat import chat
+import argparse
+import logging
+import simatic.commands as cmds
+parser = argparse.ArgumentParser(description="Simatic CLI tool")
+subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
 
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == 'chat':
+    text_parser = subparsers.add_parser("chat", help="Chat with the Simatic LLM model")
+    speech_parser = subparsers.add_parser("listen", help="Speech to text using the Whisper model")
+    cmds.listen.invoke(speech_parser)
 
-        sys.argv = [sys.argv[0]] + sys.argv[2:]
-        chat()
+    args = parser.parse_args()
+    if args.subcommand == "chat":
+        logging.info("Not implemented yet...")
+    elif args.subcommand == "listen":
+        cmds.listen.run_speech(args)
     else:
-        print("Usage: simatic chat [args...]")
-        print("For more information, use: simatic chat --help")
+        parser.print_help()
 
 
 if __name__ == "__main__":
