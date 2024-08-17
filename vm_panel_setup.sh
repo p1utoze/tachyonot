@@ -9,3 +9,4 @@ python3 -m venv venv
 source venv/bin/activate
 TMPDIR=.cache CMAKE_ARGS="-DLLAMA_NATIVE=off" pip install llama-cpp-python==0.2.78 --force-reinstall --cache-dir .cache --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 TMPDIR=.cache pip install simatic-3.0.0.tar.gz --cache-dir .cache --extra-index-url https://download.pytorch.org/whl/cpu --ignore-installed PyYAML
+TMPDIR=.cache pip install scalene --cache-dir .cache
