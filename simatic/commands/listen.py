@@ -20,7 +20,7 @@ def invoke(parser):
                         help=f"minimum time audio updates in ms, default to %(default)s")
 
     media_group = parser.add_argument_group("STATIC FILE MODE")
-    media_group.add_argument('media_file', type=str, nargs='+', help="The path of the media file or a list of files"
+    media_group.add_argument('media_file', type=str, nargs='*', help="The path of the media file or a list of files"
                                                                 "separated by space")
 
     media_group.add_argument("-p", '--processors', help="number of processors to use during computation")

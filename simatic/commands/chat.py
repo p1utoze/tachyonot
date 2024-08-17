@@ -1,19 +1,16 @@
-import argparse
+from simatic.models.llama import SimaticLLM
+from simatic.utils import get_config_path
 
-from simatic.llama import SimaticLLM
+chain = SimaticLLM(config_path=get_config_path())
 
 
-def chat():
-    parser = argparse.ArgumentParser(description="Generate text using SimaticLLM.")
+def invoke(parser):
     parser.add_argument("prompt", help="Input prompt for the model")
-    parser.add_argument("--config-path", required=True, help="Path to the configuration file for RAG")
     parser.add_argument("--data-path", default=None, help="Path to the data folder for RAG")
     parser.add_argument("--stream", default=True, help="Enable streaming output")
 
-    args = parser.parse_args()
 
-    chain = SimaticLLM(config_path=args.config_path)
-
+def run_chat(args):
     if args.data_path:
         chain.store_documents(args.data_path)
 
@@ -29,8 +26,3 @@ def chat():
     for message in generator:
         print(f"{CYAN}{message}{RESET}", end="", flush=True)
     print()
-
-
-if __name__ == "__main__":
-    chat()
-
