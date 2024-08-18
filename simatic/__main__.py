@@ -12,10 +12,11 @@ def main():
         "listen", help="Speech to text using the Whisper model"
     )
     cmds.listen.invoke(speech_parser)
+    cmds.chat.invoke(text_parser)
 
     args = parser.parse_args()
     if args.subcommand == "chat":
-        logging.info("Not implemented yet...")
+        cmds.chat.run_chat(args)
     elif args.subcommand == "listen":
         cmds.listen.run_speech(args)
     else:
