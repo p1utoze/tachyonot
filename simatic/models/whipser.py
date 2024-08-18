@@ -15,7 +15,7 @@ class VoiceTranscriber:
         "csv": lambda x, f: utils.output_csv(x, f),
         "vtt": lambda x, f: utils.output_vtt(x, f),
         "srt": lambda x, f: utils.output_srt(x, f),
-        "txt": lambda x, f: utils.output_txt(x, f)
+        "txt": lambda x, f: utils.output_txt(x, f),
     }
     _instance = None
 
@@ -24,27 +24,41 @@ class VoiceTranscriber:
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def __init__(self,
-                 model='tiny',
-                 files: str = None,
-                 processors: int = None,
-                 output_type: str = None,
-                 **model_params):
-        self.model = Model(model,
-                        **model_params
-                           )
+    def __init__(
+        self,
+        model="tiny",
+        files: str = None,
+        processors: int = None,
+        output_type: str = None,
+        **model_params,
+    ):
+        """
+        Initialize the VoiceTranscriber
+        :param model: whisper.cpp model name or a direct path to a`ggml` model
+        :param files: audio file directory path
+        :param processors: number of processors to use
+        :param output_type: output file type
+        """
+        self.model = Model(model, **model_params)
         self.processors = processors
         self.files = files
         self.output_type = output_type
 
     def generate_transcription(self) -> list:
+        """
+        Generate transcription from the audio files
+        :return: list of segments
+        """
         for file in self.files:
-            segs = self.model.transcribe(file, n_processors=self.processors if self.processors else None)
+            segs = self.model.transcribe(
+                file, n_processors=self.processors if self.processors else None
+            )
             if self.output_type:
                 file_name = VoiceTranscriber._file_dict[self.output_type](segs, file)
                 logging.info(f"{self.output_type} file saved to {file_name} ")
 
             return segs
+
 
 class VoiceAssistant:
     """
@@ -58,6 +72,7 @@ class VoiceAssistant:
     my_assistant.start()
     ```
     """
+
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -65,16 +80,17 @@ class VoiceAssistant:
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def __init__(self,
-                 model='tiny',
-                 input_device: int = None,
-                 silence_threshold: int = 8,
-                 q_threshold: int = 16,
-                 block_duration: int = 30,
-                 commands_callback: Callable[[str], None] = None,
-                 model_log_level: int = logging.INFO,
-                 **model_params):
-
+    def __init__(
+        self,
+        model="tiny",
+        input_device: int = None,
+        silence_threshold: int = 8,
+        q_threshold: int = 16,
+        block_duration: int = 30,
+        commands_callback: Callable[[str], None] = None,
+        model_log_level: int = logging.INFO,
+        **model_params,
+    ):
         """
         :param model: whisper.cpp model name or a direct path to a`ggml` model
         :param input_device: The input device (aka microphone), keep it None to take the default
@@ -98,14 +114,16 @@ class VoiceAssistant:
         self.q_threshold = q_threshold
         self._silence_counter = 0
 
-        self.pwccp_model = Model(model,
-                                 log_level=model_log_level,
-                                 print_realtime=False,
-                                 print_progress=False,
-                                 print_timestamps=False,
-                                 single_segment=True,
-                                 no_context=True,
-                                 **model_params)
+        self.pwccp_model = Model(
+            model,
+            log_level=model_log_level,
+            print_realtime=False,
+            print_progress=False,
+            print_timestamps=False,
+            single_segment=True,
+            no_context=True,
+            **model_params,
+        )
         self.commands_callback = commands_callback
 
     def _audio_callback(self, indata, frames, time, status):
@@ -113,10 +131,12 @@ class VoiceAssistant:
         This is called (from a separate thread) for each audio block.
         """
         if status:
-            logging.warning(F"underlying audio stack warning:{status}")
+            logging.warning(f"underlying audio stack warning:{status}")
 
         assert frames == self.block_size
-        audio_data = map(lambda x: (x + 1) / 2, indata)  # normalize from [-1,+1] to [0,1]
+        audio_data = map(
+            lambda x: (x + 1) / 2, indata
+        )  # normalize from [-1,+1] to [0,1]
         audio_data = np.fromiter(audio_data, np.float16)
         audio_data = audio_data.tobytes()
         detection = self.vad.is_speech(audio_data, self.sample_rate)
@@ -132,16 +152,19 @@ class VoiceAssistant:
                 self._silence_counter += 1
 
     def _transcribe_speech(self):
-        logging.info(f"Speech detected ...")
+        logging.info("Speech detected ...")
         audio_data = np.array([])
         while self.q.qsize() > 0:
             # get all the data from the q
             audio_data = np.append(audio_data, self.q.get())
         # Appending zeros to the audio data as a workaround for small audio packets (small commands)
-        audio_data = np.concatenate([audio_data, np.zeros((int(self.sample_rate) + 10))])
+        audio_data = np.concatenate(
+            [audio_data, np.zeros((int(self.sample_rate) + 10))]
+        )
         # running the inference
-        self.pwccp_model.transcribe(audio_data,
-                                    new_segment_callback=self._new_segment_callback)
+        self.pwccp_model.transcribe(
+            audio_data, new_segment_callback=self._new_segment_callback
+        )
 
     def _new_segment_callback(self, seg):
         """
@@ -149,7 +172,7 @@ class VoiceAssistant:
         :param seg:
         :return:
         """
-        #TODO: Generate a LLM chat inference
+        # TODO: Generate a LLM chat inference
         if self.commands_callback:
             self.commands_callback(seg[0].text)
 
@@ -158,16 +181,17 @@ class VoiceAssistant:
         Use this function to start the assistant
         :return: None
         """
-        logging.info(f"Starting VoiceAssistant ...")
+        logging.info("Starting VoiceAssistant ...")
         with sd.InputStream(
-                device=self.input_device,  # the default input device
-                channels=self.channels,
-                samplerate=constants.WHISPER_SAMPLE_RATE,
-                blocksize=self.block_size,
-                callback=self._audio_callback):
+            device=self.input_device,  # the default input device
+            channels=self.channels,
+            samplerate=constants.WHISPER_SAMPLE_RATE,
+            blocksize=self.block_size,
+            callback=self._audio_callback,
+        ):
 
             try:
-                logging.info(f"VoiceAssistant is listening ... (CTRL+C to stop)")
+                logging.info("VoiceAssistant is listening ... (CTRL+C to stop)")
                 while True:
                     time.sleep(0.1)
             except KeyboardInterrupt:
@@ -178,7 +202,5 @@ class VoiceAssistant:
         return sd.query_devices()
 
 
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     _main()

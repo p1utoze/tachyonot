@@ -1,13 +1,16 @@
 import argparse
 import logging
 import simatic.commands as cmds
+
 parser = argparse.ArgumentParser(description="Simatic CLI tool")
 subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
 
 
 def main():
     text_parser = subparsers.add_parser("chat", help="Chat with the Simatic LLM model")
-    speech_parser = subparsers.add_parser("listen", help="Speech to text using the Whisper model")
+    speech_parser = subparsers.add_parser(
+        "listen", help="Speech to text using the Whisper model"
+    )
     cmds.listen.invoke(speech_parser)
 
     args = parser.parse_args()

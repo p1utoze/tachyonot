@@ -6,5 +6,6 @@ class Document(pydantic.BaseModel):
     """
     Document model for storing document information.
     """
+
     text: str
     embedding: List[float]
