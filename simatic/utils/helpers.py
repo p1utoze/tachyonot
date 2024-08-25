@@ -1,5 +1,4 @@
 import os
-
 import pywhispercpp.constants as constants
 
 

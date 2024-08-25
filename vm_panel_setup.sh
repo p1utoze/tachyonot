@@ -3,11 +3,10 @@ sudo apt install build-essential cmake python3-dev python3-pip -y
 sudo apt install musl-dev -y
 sudo ln -s /usr/lib/x86_64-linux-musl/libc.so /lib/libc.musl-x86_64.so.1
 sudo apt install python3-venv -y
-cd /media/root-rw/
-sudo apt-get install libportaudi  o2
-sudo apt install ffmpeg -y
 echo "Setting CONFIG ENV variable..."
-echo "export CONFIG_PATH=$(readlink -f config.yaml)" >> ~/.bashrc
+echo "export CONFIG_PATH=$(readlink -f /media/root-rw/config.yaml)" >> ~/.bashrc
+source ~/.bashrc
+cd /media/root-rw
 mkdir .cache
 python3 -m venv .venv
 source .venv/bin/activate

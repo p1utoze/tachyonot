@@ -3,6 +3,7 @@ from simatic.models.whipser import VoiceAssistant, VoiceTranscriber
 from rich.console import Console
 from rich import print
 from rich.panel import Panel
+from os import cpu_count
 
 console = Console()
 
@@ -75,7 +76,7 @@ def run_speech(args):
             files=args.media_file,
             processors=args.processors,
             output_type=args.output_type,
-            n_threads=4,
+            n_threads=cpu_count() // 2 if cpu_count() else 1,
         )
         with console.status("[bold blue]Transcribing...") as status:
             transcriptions = my_transcriber.generate_transcription()

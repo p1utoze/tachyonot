@@ -1,5 +1,4 @@
 import argparse
-import logging
 import simatic.commands as cmds
 
 parser = argparse.ArgumentParser(description="Simatic CLI tool")

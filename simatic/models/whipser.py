@@ -1,10 +1,10 @@
 import queue
-import time
+from time import sleep
 from typing import Callable
 import numpy as np
 import sounddevice as sd
 import pywhispercpp.constants as constants
-import webrtcvad
+from webrtcvad import Vad
 import logging
 from pywhispercpp.model import Model
 import pywhispercpp.utils as utils
@@ -68,7 +68,7 @@ class VoiceAssistant:
     ```python
     from pywhispercpp.examples.assistant import VoiceAssistant
 
-    my_assistant = VoiceAssistant(commands_callback=print, n_threads=8)
+    My_assistant = VoiceAssistant(commands_callback=print, n_threads=8)
     my_assistant.start()
     ```
     """
@@ -99,7 +99,7 @@ class VoiceAssistant:
         :param block_duration: minimum time audio updates in ms
         :param commands_callback: The callback to run when a command is received
         :param model_log_level: Logging level
-        :param model_params: any other parameter to pass to the whsiper.cpp model see ::: pywhispercpp.constants.PARAMS_SCHEMA
+        :param model_params: any other parameter to pass to the whisper.cpp model see ::: pywhispercpp.constants.PARAMS_SCHEMA
         """
 
         self.input_device = input_device
@@ -109,7 +109,7 @@ class VoiceAssistant:
         self.block_size = int(self.sample_rate * self.block_duration / 1000)
         self.q = queue.Queue()
 
-        self.vad = webrtcvad.Vad()
+        self.vad = Vad()
         self.silence_threshold = silence_threshold
         self.q_threshold = q_threshold
         self._silence_counter = 0
@@ -193,14 +193,10 @@ class VoiceAssistant:
             try:
                 logging.info("VoiceAssistant is listening ... (CTRL+C to stop)")
                 while True:
-                    time.sleep(0.1)
+                    sleep(0.1)
             except KeyboardInterrupt:
                 logging.info("VoiceAssistant stopped")
 
     @staticmethod
     def available_devices():
         return sd.query_devices()
-
-
-if __name__ == "__main__":
-    _main()

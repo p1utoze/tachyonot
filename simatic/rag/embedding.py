@@ -4,7 +4,7 @@ from llama_cpp import Llama
 import os
 from docx import Document
 from simatic.utils.schema import Document
-import chardet
+from chardet import detect
 
 
 class LLamaCPPEmbedding:
@@ -105,7 +105,7 @@ class LLamaCPPEmbedding:
 
     def _read_text_file(self, file_path):
         with open(file_path, "rb") as file:
-            text = file.read().decode(chardet.detect(file.read())["encoding"])
+            text = file.read().decode(detect(file.read())["encoding"])
         return text
 
     def _read_pdf_file(self, file_path):

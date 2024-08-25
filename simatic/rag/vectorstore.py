@@ -2,7 +2,7 @@ import faiss
 import numpy as np
 from typing import List
 from simatic.utils.schema import Document
-import pickle
+from pickle import dump as p_dump, load as p_load
 from simatic.rag.embedding import LLamaCPPEmbedding
 import os
 
@@ -51,7 +51,7 @@ class FaissVectorStore:
 
         faiss.write_index(self.index, os.path.join(self.storage_path, "faiss.index"))
         with open(os.path.join(self.storage_path, "documents.pkl"), "wb") as f:
-            pickle.dump(self.documents, f)
+            p_dump(self.documents, f)
 
     def load(self):
         """
@@ -59,7 +59,7 @@ class FaissVectorStore:
         """
         self.index = faiss.read_index(os.path.join(self.storage_path, "faiss.index"))
         with open(os.path.join(self.storage_path, "documents.pkl"), "rb") as f:
-            self.documents = pickle.load(f)
+            self.documents = p_load(f)
 
 
 if __name__ == "__main__":
