@@ -6,4 +6,4 @@ poetry.lock
 **/__pycache__/
 storage
 .tiktoken_cache/
-
+.python-version
