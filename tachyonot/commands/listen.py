@@ -1,9 +1,12 @@
 import logging
-from simatic.models.whipser import VoiceAssistant, VoiceTranscriber
+import os
+
+from tachyonot.models.whipser import VoiceAssistant, VoiceTranscriber
 from rich.console import Console
 from rich import print
 from rich.panel import Panel
 from os import cpu_count
+from pathlib import Path
 
 console = Console()
 
@@ -19,6 +22,13 @@ def invoke(parser):
         default="tiny.en",
         type=str,
         help="Whisper.cpp model, default to %(default)s",
+    )
+    parser.add_argument(
+        "-d",
+        "--model-dir",
+        default=None,
+        type=str,
+        help="The directory in which Whisper model is stored. Default is `None`"
     )
     # Positional args
     record_group = parser.add_argument_group("LIVE AUDIO MODE")
@@ -70,13 +80,24 @@ def run_speech(args):
     Run the speech command
     :param args: Arguments for Speech to text
     """
+    _config_dir = Path(os.environ["CONFIG_PATH"]).parent / "model"
+    _config_dir = _config_dir.absolute()
+    if not os.path.exists(_config_dir):
+        raise FileNotFoundError(
+            console.log(
+                "[bold red]Model directory not found, please pass the model directory location using `--model-dir` flag"
+            )
+        )
+    model_dir = Path(args.model_dir).absolute() if args.model_dir else _config_dir
     if args.media_file:
+
         my_transcriber = VoiceTranscriber(
             model=args.model,
             files=args.media_file,
             processors=args.processors,
             output_type=args.output_type,
             n_threads=cpu_count() // 2 if cpu_count() else 1,
+            models_dir=model_dir
         )
         with console.status("[bold blue]Transcribing...") as status:
             transcriptions = my_transcriber.generate_transcription()
@@ -101,5 +122,6 @@ def run_speech(args):
             block_duration=args.block_duration,
             commands_callback=print,
             model_log_level=logging.ERROR,
+            models_dir=model_dir
         )
         my_assistant.start()
