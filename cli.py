@@ -1,5 +1,6 @@
 import argparse
-import simatic.commands as cmds
+import tachyonot.commands as cmds
+
 
 parser = argparse.ArgumentParser(description="Simatic CLI tool")
 subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
