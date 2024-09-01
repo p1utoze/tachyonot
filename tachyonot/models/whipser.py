@@ -1,13 +1,17 @@
 import queue
 from time import sleep
-from typing import Callable
+from typing import Callable, Union
+
+import numpy
 import numpy as np
 import sounddevice as sd
 import pywhispercpp.constants as constants
 from webrtcvad import Vad
 import logging
+from yaml import safe_load
 from pywhispercpp.model import Model
 import pywhispercpp.utils as utils
+from typing import Dict, List, Union
 
 
 class VoiceTranscriber:
@@ -26,7 +30,7 @@ class VoiceTranscriber:
 
     def __init__(
         self,
-        model="tiny",
+        model: str ="tiny",
         files: str = None,
         processors: int = None,
         output_type: str = None,
@@ -44,6 +48,17 @@ class VoiceTranscriber:
         self.files = files
         self.output_type = output_type
 
+    @staticmethod
+    def _load_config(config_path: str) -> Dict:
+        """
+        Load configuration from a YAML file.
+
+        :param config_path: Path to the configuration file
+        :return: Dictionary containing configuration
+        """
+        with open(config_path, "r") as file:
+            return safe_load(file)
+
     def generate_transcription(self) -> list:
         """
         Generate transcription from the audio files
@@ -58,6 +73,11 @@ class VoiceTranscriber:
                 logging.info(f"{self.output_type} file saved to {file_name} ")
 
             return segs
+
+    def transcribe(self, data: numpy.array):
+        return self.model.transcribe(
+            data
+        )
 
 
 class VoiceAssistant:
@@ -157,14 +177,8 @@ class VoiceAssistant:
         while self.q.qsize() > 0:
             # get all the data from the q
             audio_data = np.append(audio_data, self.q.get())
-        # Appending zeros to the audio data as a workaround for small audio packets (small commands)
-        audio_data = np.concatenate(
-            [audio_data, np.zeros((int(self.sample_rate) + 10))]
-        )
-        # running the inference
-        self.pwccp_model.transcribe(
-            audio_data, new_segment_callback=self._new_segment_callback
-        )
+        audio_data = np.concatenate([audio_data, np.zeros((int(self.sample_rate) + 10))])
+        self.pwccp_model.transcribe(audio_data, new_segment_callback=self._new_segment_callback)
 
     def _new_segment_callback(self, seg):
         """
