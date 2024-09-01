@@ -1,10 +1,10 @@
 import os
 from llama_cpp import Llama
 import yaml
-
-from simatic.rag.embedding import LLamaCPPEmbedding
-from simatic.utils.templates import TEMPLATE
-from simatic.rag.vectorstore import FaissVectorStore
+from tachyonot.rag.embedding import LLamaCPPEmbedding
+from tachyonot.utils.templates import TEMPLATE
+from tachyonot.utils.helpers import set_tiktoken_env
+from tachyonot.rag.vectorstore import FaissVectorStore
 
 from typing import Dict
 import logging
@@ -17,8 +17,17 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+logger.info("Setting tiktoken_dir")
+set_tiktoken_env()
 
 class SimaticLLM:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not isinstance(cls._instance, cls):
+            cls._instance = object.__new__(cls)
+        return cls._instance
+
     def __init__(self, config_path: str):
         """
         Initialize the RAG model with the embedding specified configuration.
@@ -48,6 +57,7 @@ class SimaticLLM:
             max_new_tokens=self.config["max_new_tokens"],
             generate_kwargs={"top_p": self.config["top_p"]},
             n_ctx=self.config["n_ctx"],
+            n_threads=1,
             verbose=False,
         )
         logger.info("Model initialized")
@@ -68,18 +78,23 @@ class SimaticLLM:
         )
         logger.info("Embedder initialized")
 
-    def store_documents(self, data_path: str):
+    def store_documents(self, data_path: str = None, file_path: str = None):
         """
         Store the documents in the vector store.
+        :param file_path: Path to the document
         :param data_path: Path to the data folder
         """
-        documents = self.embeder.embed_documents(data_path)
-        self.vectorstore.add_documents(documents)
+        if file_path:
+            docs = self.embeder.embed_file(file_path)
+        else:
+            docs = self.embeder.embed_documents(data_path)
+
+        self.vectorstore.add_documents(docs)
         logger.info("Documents stored in vector store")
         self.vectorstore.save()
         logger.info("Vector store saved")
 
-    def invoke(self, query, stream=True):
+    def invoke(self, query, stream=False):
         """
         Invoke the LLM model with the given query.
         :param query: User query
@@ -104,7 +119,7 @@ class SimaticLLM:
                 yield message["choices"][0]["delta"].get("content", "")
 
         else:
-            yield response["choices"][0]["delta"].get("content", "")
+            yield response["choices"][0]["message"].get("content", "")
 
 
 if __name__ == "__main__":
