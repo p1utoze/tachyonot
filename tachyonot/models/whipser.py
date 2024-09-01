@@ -1,8 +1,6 @@
 import queue
 from time import sleep
-from typing import Callable, Union
-
-import numpy
+from typing import Callable
 import numpy as np
 import sounddevice as sd
 import pywhispercpp.constants as constants
@@ -11,7 +9,7 @@ import logging
 from yaml import safe_load
 from pywhispercpp.model import Model
 import pywhispercpp.utils as utils
-from typing import Dict, List, Union
+from typing import Dict
 
 
 class VoiceTranscriber:
@@ -177,8 +175,14 @@ class VoiceAssistant:
         while self.q.qsize() > 0:
             # get all the data from the q
             audio_data = np.append(audio_data, self.q.get())
-        audio_data = np.concatenate([audio_data, np.zeros((int(self.sample_rate) + 10))])
-        self.pwccp_model.transcribe(audio_data, new_segment_callback=self._new_segment_callback)
+        # Appending zeros to the audio data as a workaround for small audio packets (small commands)
+        audio_data = np.concatenate(
+            [audio_data, np.zeros((int(self.sample_rate) + 10))]
+        )
+        # running the inference
+        self.pwccp_model.transcribe(
+            audio_data, new_segment_callback=self._new_segment_callback
+        )
 
     def _new_segment_callback(self, seg):
         """

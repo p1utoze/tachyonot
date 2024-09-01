@@ -1,9 +1,9 @@
 import faiss
 import numpy as np
 from typing import List
-from simatic.utils.schema import Document
+from tachyonot.utils.schema import Document
 from pickle import dump as p_dump, load as p_load
-from simatic.rag.embedding import LLamaCPPEmbedding
+from tachyonot.rag.embedding import LLamaCPPEmbedding
 import os
 
 
@@ -48,7 +48,6 @@ class FaissVectorStore:
         """
         if not os.path.exists(self.storage_path):
             os.makedirs(self.storage_path)
-
         faiss.write_index(self.index, os.path.join(self.storage_path, "faiss.index"))
         with open(os.path.join(self.storage_path, "documents.pkl"), "wb") as f:
             p_dump(self.documents, f)

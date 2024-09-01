@@ -3,7 +3,7 @@ from textsplitter import TextSplitter
 from llama_cpp import Llama
 import os
 from docx import Document
-from simatic.utils.schema import Document
+from tachyonot.utils.schema import Document
 from chardet import detect
 
 
