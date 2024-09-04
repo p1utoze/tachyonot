@@ -8,7 +8,7 @@ from PySide6.QtGui import QIcon, QTextCursor
 
 from tachyonot.models.llama import SimaticLLM
 from tachyonot.models.whipser import VoiceTranscriber
-from tachyonot.utils import get_config_path
+from tachyonot.utils.config import whipser_path
 
 class ChatBox(QFrame):
     """A Chat UI for each User-Assistant Conversation"""
@@ -206,8 +206,8 @@ class MainWindow(QMainWindow):
     """
     def __init__(self):
         super().__init__()
-        self.chat_assistant = SimaticLLM(config_path=get_config_path())  # Initialize your custom chat assistant
-        self.voice_assistant = VoiceTranscriber(model="tiny.en")
+        self.chat_assistant = SimaticLLM()  # Initialize your custom chat assistant
+        self.voice_assistant = VoiceTranscriber(model="tiny.en", models_dir=whipser_path)
         self.setWindowTitle("AI Chat Assistant")
         self.setGeometry(100, 100, 800, 600)
 

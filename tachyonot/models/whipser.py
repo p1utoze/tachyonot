@@ -6,10 +6,9 @@ import sounddevice as sd
 import pywhispercpp.constants as constants
 from webrtcvad import Vad
 import logging
-from yaml import safe_load
 from pywhispercpp.model import Model
 import pywhispercpp.utils as utils
-from typing import Dict
+from tachyonot.utils.config import whipser_path
 
 
 class VoiceTranscriber:
@@ -46,17 +45,6 @@ class VoiceTranscriber:
         self.files = files
         self.output_type = output_type
 
-    @staticmethod
-    def _load_config(config_path: str) -> Dict:
-        """
-        Load configuration from a YAML file.
-
-        :param config_path: Path to the configuration file
-        :return: Dictionary containing configuration
-        """
-        with open(config_path, "r") as file:
-            return safe_load(file)
-
     def generate_transcription(self) -> list:
         """
         Generate transcription from the audio files
@@ -72,7 +60,7 @@ class VoiceTranscriber:
 
             return segs
 
-    def transcribe(self, data: numpy.array):
+    def transcribe(self, data: np.array):
         return self.model.transcribe(
             data
         )
@@ -218,3 +206,9 @@ class VoiceAssistant:
     @staticmethod
     def available_devices():
         return sd.query_devices()
+
+if __name__ == "__main__":
+    my_transcriber = VoiceTranscriber(
+        model="tiny.en",
+        models_dir=whipser_path
+    )

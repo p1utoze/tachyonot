@@ -1,2 +1,3 @@
-from simatic.models.llama import SimaticLLM
-from simatic.models.whipser import VoiceAssistant, VoiceTranscriber
+from tachyonot.window import QApplication, MainWindow
+
+__all__ = ["QApplication", "MainWindow"]

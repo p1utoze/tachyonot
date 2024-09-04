@@ -1,6 +1,7 @@
 import os
 from llama_cpp import Llama
-import yaml
+
+import tachyonot.utils.config as tconfig
 from tachyonot.rag.embedding import LLamaCPPEmbedding
 from tachyonot.utils.templates import TEMPLATE
 from tachyonot.utils.helpers import set_tiktoken_env
@@ -28,53 +29,41 @@ class SimaticLLM:
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def __init__(self, config_path: str):
+    def __init__(self):
         """
         Initialize the RAG model with the embedding specified configuration.
-
-        :param config_path: Path to the configuration file
         """
-        self.config = self._load_config(config_path)
         self._initialize_model()
 
-    def _load_config(self, config_path: str) -> Dict:
-        """
-        Load configuration from a YAML file.
-
-        :param config_path: Path to the configuration file
-        :return: Dictionary containing configuration
-        """
-        with open(config_path, "r") as file:
-            return yaml.safe_load(file)
 
     def _initialize_model(self):
         """
         Initialize the LLM model, Faiss vector store and the embedding model.
         """
         self.llm = Llama(
-            model_path=self.config["model_path"],
-            temperature=self.config["temperature"],
-            max_new_tokens=self.config["max_new_tokens"],
-            generate_kwargs={"top_p": self.config["top_p"]},
-            n_ctx=self.config["n_ctx"],
+            model_path=str(tconfig.model_path),
+            temperature=tconfig.temperature,
+            max_new_tokens=tconfig.max_new_tokens,
+            generate_kwargs={"top_p": tconfig.top_p},
+            n_ctx=tconfig.n_ctx,
             n_threads=1,
             verbose=False,
         )
         logger.info("Model initialized")
 
         self.vectorstore = FaissVectorStore(
-            self.config["embedding_dimension"], self.config["storage_path"]
+           tconfig.embedding_dimension, str(tconfig.storage_path)
         )
         logger.info("Vector store initialized")
 
-        if os.path.exists(self.config["storage_path"]):
+        if os.path.exists(str(tconfig.storage_path)):
             logger.info("Existing vector store found... Loading vector store")
             self.vectorstore.load()
         else:
             logger.info("No existing vector store found... Creating new vector store")
 
         self.embeder = LLamaCPPEmbedding(
-            self.config["embedding_model"], chunk_size=100, chunk_overlap=20
+            str(tconfig.embedding_model), chunk_size=100, chunk_overlap=20
         )
         logger.info("Embedder initialized")
 
@@ -123,11 +112,12 @@ class SimaticLLM:
 
 
 if __name__ == "__main__":
-    chain = SimaticLLM("config.yaml")
+    chain = SimaticLLM()
     # chain.store_documents("data")
     generator = chain.invoke(
-        "What is DROPEX and how does it help in Disaster rescue and Disaster Risk Management ("
-        "DRM)?"
+        "What is Tachyonot and how does it help in Disaster rescue and Disaster Risk Management ("
+        "DRM)?",
+        stream=True,
     )
 
     CYAN = "\033[96m"
