@@ -1,10 +1,10 @@
 import sys
 from typing import List, Dict, Iterator, Union
 from pathlib import Path
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
+from PySide2.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
                                QPushButton, QLineEdit, QScrollArea, QFrame, QStyle, QFileDialog, QStatusBar)
-from PySide6.QtCore import  Signal, Slot, QSize, QTimer, Qt
-from PySide6.QtGui import QIcon, QTextCursor
+from PySide2.QtCore import  Signal, Slot, QSize, QTimer, Qt
+from PySide2.QtGui import QIcon, QTextCursor
 
 from tachyonot.models.llama import SimaticLLM
 from tachyonot.models.whipser import VoiceTranscriber
@@ -33,11 +33,11 @@ class ChatBox(QFrame):
         self.sender = QTextEdit()
         self.sender.setReadOnly(True)
         self.sender.setMaximumHeight(30)
-        self.sender.setFrameStyle(QFrame.Shape.NoFrame)
+        self.sender.setFrameStyle(QFrame.NoFrame)
 
         self.message = QTextEdit()
         self.message.setReadOnly(True)
-        self.message.setFrameStyle(QFrame.Shape.NoFrame)
+        self.message.setFrameStyle(QFrame.NoFrame)
 
         self._text_generator = None
 
@@ -286,7 +286,7 @@ class MainWindow(QMainWindow):
         QWidget::item { selection-color: #4CAF50 }
         """)
         dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        if dialog.exec():       # Start the dialog box
+        if dialog.exec_():       # Start the dialog box
             file_name = dialog.selectedUrls()[0]
             if file_name:
                 path = Path(file_name.path())
@@ -326,4 +326,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
