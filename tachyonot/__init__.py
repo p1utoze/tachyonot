@@ -1,3 +1,4 @@
-from tachyonot.window import QApplication, MainWindow
+from tachyonot.models.llama import SimaticLLM
+from tachyonot.models.whipser import VoiceTranscriber
 
-__all__ = ["QApplication", "MainWindow"]
+__all__ = ['SimaticLLM', 'VoiceTranscriber']
