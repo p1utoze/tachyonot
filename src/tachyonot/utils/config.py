@@ -6,7 +6,7 @@ ROOT_DIR = Path(__file__).parent.parent / "resources"
 
 def get_model_dir():
     try:
-        return os.environ["MODEL_DIR"]
+        return Path(os.environ["MODEL_DIR"])
     except KeyError:
         print("No MODEL_DIR env variable found!. Setting Default dir")
         return ROOT_DIR / "model"
