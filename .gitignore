@@ -63,7 +63,7 @@ logs/
 
 .python-version
 dependencies
-wheels
+
 src/.tiktoken_cache
 src/tachyonot/resources/model
 src/tachyonot/resources/nltk_data
