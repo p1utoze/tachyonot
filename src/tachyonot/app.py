@@ -4,13 +4,18 @@ from .models.whipser import VoiceTranscriber
 from .utils.config import whipser_path
 from typing import List, Dict, Iterator, Union
 from pathlib import Path
-from PySide2.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
                                QPushButton, QLineEdit, QScrollArea, QFrame, QStyle, QFileDialog, QStatusBar)
-from PySide2.QtCore import  Signal, Slot, QSize, QTimer, Qt
-from PySide2.QtGui import QIcon, QTextCursor
-import nltk
-import os
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt
+from PyQt5.QtGui import QIcon, QTextCursor
 
+#TODO: Set custom icons pack
+#TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS)
+#TODO: Set Audio based command input
+#TODO: Create makeself installer from script
+
+
+ICONS_DIR = Path(__file__).parent / "resources" / "icons"
 
 class ChatBox(QFrame):
     """A Chat UI for each User-Assistant Conversation"""
@@ -26,8 +31,8 @@ class ChatBox(QFrame):
 
         """
         super().__init__(parent)
-        self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setFrameShadow(QFrame.Shadow.Raised)
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setFrameShadow(QFrame.Raised)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
@@ -80,9 +85,9 @@ class ChatBox(QFrame):
             return
         try:
             next_token = next(self._text_generator)
-            self.message.moveCursor(QTextCursor.MoveOperation.End)
+            self.message.moveCursor(QTextCursor.End)
             self.message.insertPlainText(next_token)
-            self.message.moveCursor(QTextCursor.MoveOperation.End)
+            self.message.moveCursor(QTextCursor.End)
         except StopIteration:
             self.timer.stop()
             del self._text_generator
@@ -92,7 +97,7 @@ class ChatWidget(QWidget):
     """
     Custom PySide6 Widget for Chatbot like User Interface.
     """
-    message_sent = Signal(str)
+    message_sent = pyqtSignal(str)
 
     def __init__(self):
         """
@@ -117,8 +122,8 @@ class ChatWidget(QWidget):
         # Input Box
         self.input_area = QLineEdit()
         self.input_area.setPlaceholderText("What's on your mind today?")
-        self.input_area.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.send_button = QPushButton(icon=QIcon.fromTheme("mail-send"))
+        self.input_area.setFocusPolicy(Qt.StrongFocus)
+        self.send_button = QPushButton(icon=QIcon(str(ICONS_DIR / "send.svg")))
         self.send_button.setIconSize(QSize(30, 30))
         self.send_button.setStyleSheet("background-color: none;")
         self.send_button.setToolTip("Send")
@@ -137,7 +142,7 @@ class ChatWidget(QWidget):
         self.input_area.returnPressed.connect(self.send_message)
 
         # Voice chat button
-        self.voice_button = QPushButton(icon=QIcon.fromTheme("audio-input-microphone"))
+        self.voice_button = QPushButton(icon=QIcon(str(ICONS_DIR / "microphone.svg")))
         self.voice_button.setToolTip("Record voice")
         self.voice_button.setIconSize(QSize(25, 25))
         self.voice_button.setStyleSheet("background-color: none;")
@@ -145,12 +150,11 @@ class ChatWidget(QWidget):
 
         # File upload button
         plus_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
-        self.upload_button = QPushButton(icon=plus_icon)
+        self.upload_button = QPushButton(icon=QIcon(str(ICONS_DIR / "plus-file.svg")))
         self.upload_button.setToolTip("Attach File")
-        self.upload_button.setIconSize(QSize(20, 20))
+        self.upload_button.setIconSize(QSize(25, 25))
         self.upload_button.setStyleSheet("background-color: none;")
         self.input_layout.addWidget(self.upload_button)
-
 
     def send_message(self):
         """
@@ -170,7 +174,6 @@ class ChatWidget(QWidget):
         :return:
         """
         message_box = ChatBox(sender=sender)
-        # print("Invoked")
         message_box[sender] = message
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, message_box)
         self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
@@ -199,7 +202,6 @@ class ConversationBufferWindowMemory:
 
     def get_context(self) -> str:
         return "\n".join([f"{msg['role']}: {msg['content']}" for msg in self.messages])
-
 
 
 class MainWindow(QMainWindow):
@@ -252,7 +254,7 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-    @Slot(str)
+    @pyqtSlot(str)
     def handle_user_message(self, message):
         """
 
@@ -287,7 +289,7 @@ class MainWindow(QMainWindow):
         QWidget { font-size: 14px; color: black; selection-color: #4CAF50 }
         QWidget::item { selection-color: #4CAF50 }
         """)
-        dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        dialog.setFileMode(QFileDialog.ExistingFile)
         if dialog.exec_():       # Start the dialog box
             file_name = dialog.selectedUrls()[0]
             if file_name:
@@ -305,7 +307,7 @@ class MainWindow(QMainWindow):
         """
         try:
             self.status_bar.setStyleSheet(self.processing_style)
-            self.status_bar.showMessage("Processing the document.Please wait...")
+            self.status_bar.showMessage("Processing the document. Please wait...")
             self.chat_widget.upload_button.setEnabled(False)
             QApplication.processEvents() # Collect signal from blocking events
 
