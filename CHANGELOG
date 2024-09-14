@@ -1,5 +1,30 @@
 # Tachyonot Release Notes
 
-## 0.0.1 (10 Sep 2024)
+## 3.5.3 (13 September 2024)
+This release includes the following new features:
+- Support for LLMs on embedded systems with low power requirements such as:
+    - No AVX support
+    - No GPU support
+    - No F16C support
+- Support for Intel Atom Goldmont processors
+- Migrate from PyInstaller based packaging to Briefcase based packaging
+- Minor fixes in NLTK data handling and model weights loading
 
-* Initial release
+## 3.5.2 (10 September 2024)
+This release includes the following new features:
+- Migration from Transformers to LlamaCPP
+- Removal of PyTorch and Transformer support there by reducing the disk space usage
+- Removal of Llama Index based RAG support and custom RAG support for LLMs introduced
+
+## 1.3.2 (6 August 2024)
+This release includes the following new features:
+- Reduction in disk space usage py dependencies
+- Migration to Transformers from Openvino
+
+* Initial release (24 July 2024)
+First official release of Tachyonot. This release includes the following features:
+- Support for text based LLMs
+- Support for audio based LLMs
+- Openvino support for LLMs
+- Llama Index based RAG support
+- Faiss Based Indexing

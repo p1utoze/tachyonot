@@ -28,7 +28,7 @@ def invoke(parser):
         "--model-dir",
         default=None,
         type=str,
-        help="The directory in which Whisper model is stored. Default is `None`"
+        help="The directory in which Whisper model is stored. Default is `None`",
     )
     # Positional args
     record_group = parser.add_argument_group("LIVE AUDIO MODE")
@@ -97,7 +97,7 @@ def run_speech(args):
             processors=args.processors,
             output_type=args.output_type,
             n_threads=cpu_count() // 2 if cpu_count() else 1,
-            models_dir=model_dir
+            models_dir=model_dir,
         )
         with console.status("[bold blue]Transcribing...") as status:
             transcriptions = my_transcriber.generate_transcription()
@@ -122,6 +122,6 @@ def run_speech(args):
             block_duration=args.block_duration,
             commands_callback=print,
             model_log_level=logging.ERROR,
-            models_dir=model_dir
+            models_dir=model_dir,
         )
         my_assistant.start()

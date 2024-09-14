@@ -7,7 +7,6 @@ from ..utils.templates import TEMPLATE
 from ..utils.helpers import set_tiktoken_env
 from ..rag.vectorstore import FaissVectorStore
 
-from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,6 +19,7 @@ logger.addHandler(console_handler)
 
 logger.info("Setting tiktoken_dir")
 set_tiktoken_env()
+
 
 class SimaticLLM:
     _instance = None
@@ -34,7 +34,6 @@ class SimaticLLM:
         Initialize the RAG model with the embedding specified configuration.
         """
         self._initialize_model()
-
 
     def _initialize_model(self):
         """
@@ -52,7 +51,7 @@ class SimaticLLM:
         logger.info("Model initialized")
 
         self.vectorstore = FaissVectorStore(
-           tconfig.embedding_dimension, str(tconfig.storage_path)
+            tconfig.embedding_dimension, str(tconfig.storage_path)
         )
         logger.info("Vector store initialized")
 

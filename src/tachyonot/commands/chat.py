@@ -1,5 +1,6 @@
 from tachyonot.models.llama import SimaticLLM
 from tachyonot.utils import get_config_path
+
 chain = SimaticLLM(config_path=get_config_path())
 
 
@@ -18,9 +19,9 @@ def invoke(parser):
 
 def run_chat(args):
     """
-    Run the chat command
-    :param args: LLM chat arugments such as prompt, data_path, stream
-   self """
+     Run the chat command
+     :param args: LLM chat arugments such as prompt, data_path, stream
+    self"""
     if args.data_path:
         chain.store_documents(data_path=args.data_path)
 

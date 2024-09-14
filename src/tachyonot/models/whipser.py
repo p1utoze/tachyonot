@@ -27,7 +27,7 @@ class VoiceTranscriber:
 
     def __init__(
         self,
-        model: str ="tiny",
+        model: str = "tiny",
         files: str = None,
         processors: int = None,
         output_type: str = None,
@@ -62,9 +62,7 @@ class VoiceTranscriber:
             return segs
 
     def transcribe(self, data: np.array):
-        return self.model.transcribe(
-            data
-        )
+        return self.model.transcribe(data)
 
 
 class VoiceAssistant:
@@ -208,8 +206,6 @@ class VoiceAssistant:
     def available_devices():
         return sd.query_devices()
 
+
 if __name__ == "__main__":
-    my_transcriber = VoiceTranscriber(
-        model="tiny.en",
-        models_dir=whipser_path
-    )
+    my_transcriber = VoiceTranscriber(model="tiny.en", models_dir=whipser_path)

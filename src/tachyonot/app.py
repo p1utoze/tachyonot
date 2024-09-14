@@ -4,21 +4,36 @@ from .models.whipser import VoiceTranscriber
 from .utils.config import whipser_path
 from typing import List, Dict, Iterator, Union
 from pathlib import Path
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit,
-                               QPushButton, QLineEdit, QScrollArea, QFrame, QStyle, QFileDialog, QStatusBar)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTextEdit,
+    QPushButton,
+    QLineEdit,
+    QScrollArea,
+    QFrame,
+    QStyle,
+    QFileDialog,
+    QStatusBar,
+)
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt
 from PyQt5.QtGui import QIcon, QTextCursor
 
-#TODO: Set custom icons pack
-#TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS)
-#TODO: Set Audio based command input
-#TODO: Create makeself installer from script
+# TODO: Set custom icons pack
+# TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS)
+# TODO: Set Audio based command input
+# TODO: Create makeself installer from script
 
 
 ICONS_DIR = Path(__file__).parent / "resources" / "icons"
 
+
 class ChatBox(QFrame):
     """A Chat UI for each User-Assistant Conversation"""
+
     def __init__(self, sender: str, parent=None):
         """
         Initialize the Chat UI for the particular role.
@@ -97,6 +112,7 @@ class ChatWidget(QWidget):
     """
     Custom PySide6 Widget for Chatbot like User Interface.
     """
+
     message_sent = pyqtSignal(str)
 
     def __init__(self):
@@ -149,7 +165,9 @@ class ChatWidget(QWidget):
         self.input_layout.addWidget(self.voice_button)
 
         # File upload button
-        plus_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogNewFolder)
+        plus_icon = self.style().standardIcon(
+            QStyle.StandardPixmap.SP_FileDialogNewFolder
+        )
         self.upload_button = QPushButton(icon=QIcon(str(ICONS_DIR / "plus-file.svg")))
         self.upload_button.setToolTip("Attach File")
         self.upload_button.setIconSize(QSize(25, 25))
@@ -176,13 +194,16 @@ class ChatWidget(QWidget):
         message_box = ChatBox(sender=sender)
         message_box[sender] = message
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, message_box)
-        self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
+        self.chat_area.verticalScrollBar().setValue(
+            self.chat_area.verticalScrollBar().maximum()
+        )
 
 
 class ConversationBufferWindowMemory:
     """
     A Chat history implementation based on K-Windows Buffer from Langchain
     """
+
     def __init__(self, k: int = 5):
         """
         Initializet the chat memory.
@@ -194,7 +215,7 @@ class ConversationBufferWindowMemory:
     def add_message(self, role: str, content: str):
         self.messages.append({"role": role, "content": content})
         if len(self.messages) > 2 * self.k:
-            self._messages = self.messages[-2 * self.k:]
+            self._messages = self.messages[-2 * self.k :]
 
     @property
     def messages(self) -> List[Dict[str, str]]:
@@ -208,21 +229,26 @@ class MainWindow(QMainWindow):
     """
     Main PyQT window launched with a AI chatbot Interface
     """
+
     def __init__(self):
         super().__init__()
         self.chat_assistant = SimaticLLM()  # Initialize your custom chat assistant
-        self.voice_assistant = VoiceTranscriber(model="tiny.en", models_dir=whipser_path)
+        self.voice_assistant = VoiceTranscriber(
+            model="tiny.en", models_dir=whipser_path
+        )
         self.setWindowTitle("AI Chat Assistant")
         self.setGeometry(100, 100, 800, 600)
 
         # Define styling for the QT Application
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
                     QMainWindow, QWidget { background-color: #f0f0f0; }
                     QTextEdit, QLineEdit { background-color: white; border: 1px solid #ddd; color: black }
                     QPushButton { background-color: #4CAF50; color: white; border: none; padding: 5px; }
                     QPushButton:hover { background-color: #45a049; }
                     QFileDialog { color: white; border: none; padding: 5px; }
-                """)
+                """
+        )
         self.processing_style = (
             "QStatusBar { background-color: #FFF3CD; color: #856404; font-weight: bold; }"
             "QStatusBar::item { border: none; }"
@@ -272,7 +298,9 @@ class MainWindow(QMainWindow):
         :return:
         """
         # context = self.memory.get_context()
-        self.chat_widget.add_message("Assistant", self.chat_assistant.invoke(query, stream=True))
+        self.chat_widget.add_message(
+            "Assistant", self.chat_assistant.invoke(query, stream=True)
+        )
 
     def toggle_voice_chat(self):
         # Implement voice chat functionality here
@@ -285,12 +313,14 @@ class MainWindow(QMainWindow):
         :return:
         """
         dialog = QFileDialog(self, caption="Select a directory")
-        dialog.setStyleSheet("""
+        dialog.setStyleSheet(
+            """
         QWidget { font-size: 14px; color: black; selection-color: #4CAF50 }
         QWidget::item { selection-color: #4CAF50 }
-        """)
+        """
+        )
         dialog.setFileMode(QFileDialog.ExistingFile)
-        if dialog.exec_():       # Start the dialog box
+        if dialog.exec_():  # Start the dialog box
             file_name = dialog.selectedUrls()[0]
             if file_name:
                 path = Path(file_name.path())
@@ -309,7 +339,7 @@ class MainWindow(QMainWindow):
             self.status_bar.setStyleSheet(self.processing_style)
             self.status_bar.showMessage("Processing the document. Please wait...")
             self.chat_widget.upload_button.setEnabled(False)
-            QApplication.processEvents() # Collect signal from blocking events
+            QApplication.processEvents()  # Collect signal from blocking events
 
             self.chat_assistant.store_documents(file_path=str(file_path))
             self.status_bar.setStyleSheet(self.finished_style)
@@ -319,11 +349,14 @@ class MainWindow(QMainWindow):
         except BaseException as e:
             print(e)
             self.status_bar.setStyleSheet("background-color: red")
-            self.status_bar.showMessage("Error processing documents: " + str(e), timeout=10000)
+            self.status_bar.showMessage(
+                "Error processing documents: " + str(e), timeout=10000
+            )
 
     def reset_status_bar(self):
         self.status_bar.setStyleSheet(self.default_style)
         self.status_bar.clearMessage()
+
 
 def main():
     app = QApplication(sys.argv)
