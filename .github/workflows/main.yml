@@ -1,1 +1,53 @@
+name: Check and packaging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  formatiing-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install black
+        run: pip install black
+
+      - name: Run black
+        run: black .
+
+  packaging:
+    runs-on: debian:bullseye-slim
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+            apt-get update
+            pip install briefcase
+
+      - name: Perform packaging
+        run: |
+          briefcase package
+
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: tachyonot
+          path: |
+            dist/*
+          if-no-files-found: error
 
