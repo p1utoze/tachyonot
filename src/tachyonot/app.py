@@ -69,7 +69,7 @@ class ChatBox(QFrame):
         else:
             self.timer = QTimer()
             self.timer.timeout.connect(self.append_message)
-            self.timer.start(50)
+            self.timer.start(1)
             self.setStyleSheet("background-color: #F0F0F0;")
 
         layout.addWidget(self.sender)
@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
             print(e)
             self.status_bar.setStyleSheet("background-color: red")
             self.status_bar.showMessage(
-                "Error processing documents: " + str(e), timeout=10000
+                "Error processing documents: " + str(e), msecs=10000
             )
 
     def reset_status_bar(self):
