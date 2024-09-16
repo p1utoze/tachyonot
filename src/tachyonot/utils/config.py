@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
-import shutil
+
+import nltk
+from rich import print
 
 ROOT_DIR = Path(__file__).parent.parent / "resources"
 
@@ -9,14 +11,14 @@ def get_model_dir():
     try:
         return Path(os.environ["MODEL_DIR"])
     except KeyError:
-        print("No MODEL_DIR env variable found!. Setting Default dir")
+        print("[bold gold1]Warning:[/bold gold1]No MODEL_DIR env variable found!. [bold dodger_blue1]Setting default DIR...")
         return ROOT_DIR / "model"
 
 
 def download_nltk_data():
-    if not os.path.exists(ROOT_DIR / "nltk_data"):
-        os.makedirs(Path.home() / "nltk_data", exist_ok=True)
-        shutil.move(Path.home() / "nltk_data", ROOT_DIR / "nltk_data")
+    if os.path.exists(ROOT_DIR / "nltk_data"):
+        nltk.data.path.append(ROOT_DIR / "nltk_data")
+
 
 
 MODEL_DIR = get_model_dir()
