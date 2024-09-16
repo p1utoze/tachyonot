@@ -1,7 +1,5 @@
 from tachyonot.models.llama import SimaticLLM
-from tachyonot.utils import get_config_path
-
-chain = SimaticLLM(config_path=get_config_path())
+chain = SimaticLLM()
 
 
 def invoke(parser):
