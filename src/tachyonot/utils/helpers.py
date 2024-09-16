@@ -1,13 +1,15 @@
 import os
 import pywhispercpp.constants as constants
 from pathlib import Path
+from tachyonot.utils.config import ROOT_DIR
+from rich import print
 
 
 def set_tiktoken_env():
     """
     Set environment variables from argparse
     """
-    tiktoken_dir = Path(__file__).parents[2].absolute() / ".tiktoken_cache"
+    tiktoken_dir = ROOT_DIR / ".tiktoken_cache"
     os.environ["TIKTOKEN_CACHE_DIR"] = str(tiktoken_dir)
     print(os.environ["TIKTOKEN_CACHE_DIR"])
 
