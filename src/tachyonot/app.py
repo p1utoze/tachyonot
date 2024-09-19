@@ -15,12 +15,13 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QScrollArea,
     QFrame,
-    QStyle,
     QFileDialog,
     QStatusBar,
 )
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt
+import os
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt, QUrl
 from PyQt5.QtGui import QIcon, QTextCursor
+from PyQt5.QtMultimedia import QAudioRecorder, QAudioEncoderSettings, QMultimedia
 
 # TODO: Set custom icons pack
 # TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS)
@@ -53,11 +54,17 @@ class ChatBox(QFrame):
         layout.setSpacing(0)
 
         self.sender = QTextEdit()
+        f = self.sender.font()
+        f.setPointSize(14)
+        self.sender.setFont(f)
         self.sender.setReadOnly(True)
         self.sender.setMaximumHeight(30)
         self.sender.setFrameStyle(QFrame.NoFrame)
 
         self.message = QTextEdit()
+        f = self.message.font()
+        f.setPointSize(14)
+        self.message.setFont(f)
         self.message.setReadOnly(True)
         self.message.setFrameStyle(QFrame.NoFrame)
 
@@ -114,6 +121,7 @@ class ChatWidget(QWidget):
     """
 
     message_sent = pyqtSignal(str)
+    voice_recording_finished = pyqtSignal(str)
 
     def __init__(self):
         """
@@ -139,8 +147,11 @@ class ChatWidget(QWidget):
         self.input_area = QLineEdit()
         self.input_area.setPlaceholderText("What's on your mind today?")
         self.input_area.setFocusPolicy(Qt.StrongFocus)
+        f = self.input_area.font()
+        f.setPointSize(14)  # sets the size to 27
+        self.input_area.setFont(f)
         self.send_button = QPushButton(icon=QIcon(str(ICONS_DIR / "send.svg")))
-        self.send_button.setIconSize(QSize(30, 30))
+        self.send_button.setIconSize(QSize(35, 35))
         self.send_button.setStyleSheet("background-color: none;")
         self.send_button.setToolTip("Send")
 
@@ -160,19 +171,60 @@ class ChatWidget(QWidget):
         # Voice chat button
         self.voice_button = QPushButton(icon=QIcon(str(ICONS_DIR / "microphone.svg")))
         self.voice_button.setToolTip("Record voice")
-        self.voice_button.setIconSize(QSize(25, 25))
-        self.voice_button.setStyleSheet("background-color: none;")
+        self.voice_button.setIconSize(QSize(30, 30))
+        self.voice_button.setStyleSheet("background-color: none; border-radius: 20px; border: green;")
+        self.voice_button.clicked.connect(self.toggle_voice_recording)
         self.input_layout.addWidget(self.voice_button)
 
         # File upload button
-        plus_icon = self.style().standardIcon(
-            QStyle.StandardPixmap.SP_FileDialogNewFolder
-        )
+        # plus_icon = self.style().standardIcon(
+        #     QStyle.StandardPixmap.SP_FileDialogNewFolder
+        # )
         self.upload_button = QPushButton(icon=QIcon(str(ICONS_DIR / "plus-file.svg")))
         self.upload_button.setToolTip("Attach File")
-        self.upload_button.setIconSize(QSize(25, 25))
+        self.upload_button.setIconSize(QSize(30, 30))
         self.upload_button.setStyleSheet("background-color: none;")
         self.input_layout.addWidget(self.upload_button)
+
+        self.audio_recorder = QAudioRecorder()
+        self.is_recording = False
+        self.setup_audio_recorder()
+        # print(self.audio_recorder.supportedAudioCodecs())
+        # print(self.audio_recorder.supportedContainers())
+
+        self.temp_file = None
+
+    def setup_audio_recorder(self):
+        settings = QAudioEncoderSettings()
+        settings.setCodec("audio/x-raw")
+        settings.setSampleRate(16000)
+        settings.setChannelCount(1)
+        settings.setQuality(QMultimedia.EncodingQuality.HighQuality)
+
+        self.audio_recorder.setEncodingSettings(settings)
+        self.audio_recorder.setContainerFormat("audio/x-wav")
+
+    def toggle_voice_recording(self):
+        if not self.is_recording:
+            self.start_recording()
+        else:
+            self.stop_recording()
+
+    def start_recording(self):
+        self.is_recording = True
+        self.voice_button.setStyleSheet("background-color: red; border-radius: 17%")
+
+        # Set up a temporary file for recording
+        self.temp_file = os.path.join(os.path.dirname(__file__), "temp_audio.wav")
+        self.audio_recorder.setOutputLocation(QUrl.fromLocalFile(self.temp_file))
+
+        self.audio_recorder.record()
+
+    def stop_recording(self):
+        self.is_recording = False
+        self.voice_button.setStyleSheet("background-color: none;")
+        self.audio_recorder.stop()
+        self.voice_recording_finished.emit(self.temp_file)
 
     def send_message(self):
         """
@@ -237,7 +289,7 @@ class MainWindow(QMainWindow):
             model="tiny.en", models_dir=whipser_path
         )
         self.setWindowTitle("AI Chat Assistant")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1280, 720)
 
         # Define styling for the QT Application
         self.setStyleSheet(
@@ -270,7 +322,7 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.chat_widget)
 
         self.chat_widget.message_sent.connect(self.handle_user_message)
-        self.chat_widget.voice_button.clicked.connect(self.toggle_voice_chat)
+        self.chat_widget.voice_recording_finished.connect(self.toggle_voice_chat)
         self.chat_widget.upload_button.clicked.connect(self.open_dialog)
 
         # Initialize conversation memory
@@ -302,9 +354,15 @@ class MainWindow(QMainWindow):
             "Assistant", self.chat_assistant.invoke(query, stream=True)
         )
 
-    def toggle_voice_chat(self):
+    def toggle_voice_chat(self, audio_file):
         # Implement voice chat functionality here
         print("Voice chat toggled")
+        transcription = self.voice_assistant.transcribe(audio_file)
+        # Add the transcribed text to the chat
+        self.chat_widget.input_area.setText(transcription[0].text)
+
+        # Clean up the temporary audio file
+        os.remove(audio_file)
 
     def open_dialog(self):
         """
