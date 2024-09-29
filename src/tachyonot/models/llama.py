@@ -82,7 +82,7 @@ class SimaticLLM:
         self.vectorstore.save()
         logger.info("Vector store saved")
 
-    def invoke(self, query, stream=False, rag=False, data_path=None):
+    def invoke(self, query, stream=False, data_path=None):
         """
         Invoke the LLM model with the given query.
         :param query: User query
@@ -92,16 +92,12 @@ class SimaticLLM:
         query_embedding = self.embeder.embed_prompt(query)
         final_context = ""
 
-        if rag:
+        if data_path:
+            final_context, _ = self.embeder.embed_file(data_path)
+        else:
             results = self.vectorstore.search(query_embedding)
-
             for context, distance in results:
                 final_context += context.text + "\n"
-        else:
-            if data_path:
-                final_context, _ = self.embeder.embed_file(data_path)
-            else:
-                raise ValueError("Data path not provided")
 
         prompt = TEMPLATE.format(context=final_context, question=query)
 
