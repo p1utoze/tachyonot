@@ -1,8 +1,11 @@
 import os
 import pywhispercpp.constants as constants
-from pathlib import Path
+from chardet import detect
 from tachyonot.utils.config import ROOT_DIR
 from rich import print
+import PyPDF2
+import pandas as pd
+from docx import Document
 
 
 def set_tiktoken_env():
@@ -37,3 +40,50 @@ def get_config_path():
     except KeyError:
         raise ValueError("CONFIG_PATH environment variable not set")
     return config_path
+
+def read_text_file(file_path):
+    with open(file_path, "rb") as file:
+        text = file.read().decode(detect(file.read())["encoding"])
+    return text
+
+def read_pdf_file(file_path):
+    with open(file_path, "rb") as file:
+        reader = PyPDF2.PdfReader(file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text
+
+def read_docx_file(file_path):
+    doc = Document(file_path)
+    text = ""
+    for paragraph in doc.paragraphs:
+        text += paragraph.text + "\n"
+    return text
+
+def read_xlsx_file(file_path):
+    df = pd.read_excel(file_path)
+    threshold = int(len(df) * 0.9)
+    df = df.dropna(axis=1, thresh=threshold)
+    df = df.dropna()
+    text = ""
+    for index, row in df.iterrows():
+        text += " ".join([f"{col_name}: {value}" for col_name, value in row.items()]) + "\n"
+    return text
+
+def read_file(file_path):
+    _, file_extension = os.path.splitext(file_path)
+    file_extension = file_extension.lower()
+
+    if file_extension == ".txt":
+        text = read_text_file(file_path)
+    elif file_extension == ".pdf":
+        text = read_pdf_file(file_path)
+    elif file_extension == ".docx":
+        text = read_docx_file(file_path)
+    elif file_extension == ".xlsx":
+        text = read_xlsx_file(file_path)
+    else:
+        raise ValueError("Unsupported file type")
+
+    return text

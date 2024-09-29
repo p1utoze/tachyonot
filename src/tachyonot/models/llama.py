@@ -82,7 +82,7 @@ class SimaticLLM:
         self.vectorstore.save()
         logger.info("Vector store saved")
 
-    def invoke(self, query, stream=False):
+    def invoke(self, query, stream=False, rag=False, data_path=None):
         """
         Invoke the LLM model with the given query.
         :param query: User query
@@ -90,11 +90,18 @@ class SimaticLLM:
         :return: generator of responses
         """
         query_embedding = self.embeder.embed_prompt(query)
-        results = self.vectorstore.search(query_embedding)
-
         final_context = ""
-        for context, distance in results:
-            final_context += context.text + "\n"
+
+        if rag:
+            results = self.vectorstore.search(query_embedding)
+
+            for context, distance in results:
+                final_context += context.text + "\n"
+        else:
+            if data_path:
+                final_context, _ = self.embeder.embed_file(data_path)
+            else:
+                raise ValueError("Data path not provided")
 
         prompt = TEMPLATE.format(context=final_context, question=query)
 
@@ -117,6 +124,7 @@ if __name__ == "__main__":
         "What are Drones  and how does it help in Disaster rescue and Disaster Risk Management ("
         "DRM)?",
         stream=True,
+        data_path="data/Report_000.xlsx"
     )
 
     CYAN = "\033[96m"

@@ -1,10 +1,9 @@
-import PyPDF2
 from textsplitter import TextSplitter
 from llama_cpp import Llama
 import os
 from docx import Document
 from ..utils.schema import Document
-from chardet import detect
+from ..utils.helpers import read_text_file, read_pdf_file, read_docx_file, read_xlsx_file, read_file
 
 
 class LLamaCPPEmbedding:
@@ -55,19 +54,8 @@ class LLamaCPPEmbedding:
         :param file_path: The path to the input file
         :return: A list of Document objects, each containing a text chunk and its corresponding embedding
         """
-        _, file_extension = os.path.splitext(file_path)
-        file_extension = file_extension.lower()
-
-        if file_extension == ".txt":
-            text = self._read_text_file(file_path)
-        elif file_extension == ".pdf":
-            text = self._read_pdf_file(file_path)
-        elif file_extension == ".docx":
-            text = self._read_docx_file(file_path)
-        else:
-            raise "Unsupported file type"
-
-        return self.embed_text(text)
+        text = read_file(file_path)
+        return self.embed_text(text), text
 
     def embed_documents(self, directory_path: str):
         """
@@ -102,26 +90,6 @@ class LLamaCPPEmbedding:
                 overlapped_chunks.append(chunks[i])
 
         return overlapped_chunks
-
-    def _read_text_file(self, file_path):
-        with open(file_path, "rb") as file:
-            text = file.read().decode(detect(file.read())["encoding"])
-        return text
-
-    def _read_pdf_file(self, file_path):
-        with open(file_path, "rb") as file:
-            reader = PyPDF2.PdfReader(file)
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() + "\n"
-            return text
-
-    def _read_docx_file(self, file_path):
-        doc = Document(file_path)
-        text = ""
-        for paragraph in doc.paragraphs:
-            text += paragraph.text + "\n"
-        return text
 
 
 if __name__ == "__main__":
