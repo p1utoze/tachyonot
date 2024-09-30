@@ -4,6 +4,7 @@ from .models.whipser import VoiceTranscriber
 from .utils.config import whipser_path
 from typing import List, Dict, Iterator, Union
 from pathlib import Path
+from enum import Enum
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -17,19 +18,24 @@ from PyQt5.QtWidgets import (
     QFrame,
     QFileDialog,
     QStatusBar,
+    QAction
 )
 import os
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt, QUrl
-from PyQt5.QtGui import QIcon, QTextCursor
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QSize, QTimer, Qt, QUrl, PYQT_VERSION
+from PyQt5.QtGui import QIcon, QTextCursor, QFont
 from PyQt5.QtMultimedia import QAudioRecorder, QAudioEncoderSettings, QMultimedia
 
-# TODO: Set custom icons pack
-# TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS)
-# TODO: Set Audio based command input
-# TODO: Create makeself installer from script
+# TODO: Set custom icons pack: "DONE"
+# TODO: Optimise the chat streaming (reduce mtimer or disable OpenBLAS): "DONE"
+# TODO: Set Audio based command input: "DONE"
+# TODO: Create makeself installer from script: "DONE"
 
 
 ICONS_DIR = Path(__file__).parent / "resources" / "icons"
+
+class DialogMode(Enum):
+    ExistingFile = QFileDialog.ExistingFile
+    ExistingFolder = QFileDialog.DirectoryOnly
 
 
 class ChatBox(QFrame):
@@ -308,9 +314,10 @@ class MainWindow(QMainWindow):
         self.finished_style = (
             "QStatusBar { background-color: #03DD4E; color: #155724; font-weight: bold; }"
             "QStatusBar::item { border: none; }"
+            "QMenu {color: black; }"
         )
         self.default_style = (
-            "QStatusBar { background-color: none; color: black; }"
+            "QStatusBar { background-color: none; color: black; font-weight: bold; font}"
             "QStatusBar::item { border: none; }"
         )
 
@@ -330,12 +337,41 @@ class MainWindow(QMainWindow):
 
         # Initialize Status Bar
         self.status_bar = QStatusBar()
+        self.status_bar.setStyleSheet(self.default_style)
+        self.status_bar.setFont(QFont("Arial", 11))
         self.setStatusBar(self.status_bar)
+
+        button_action = QAction("Built-in RAG Mode", self)
+        button_action.setToolTip("Enable or disable context retrieval")
+        button_action.setCheckable(True)
+        button_action.setChecked(True)
+        button_action.toggled.connect(self.toggle_rag_mode)
+
+
+        menu = self.menuBar()
+        menu.setStyleSheet("""
+            QMenuBar {color: black; }
+            QMenu {color: black; border-radius: 5px; border: 1px solid #000; }
+            """
+        )
+
+        self.options_menu = menu.addMenu("Options")
+        self.options_menu.setStyleSheet(f"background-color: lightblue")
+        self.options_menu.addAction(button_action)
+
+        self.file_mode = DialogMode.ExistingFolder.value
+
+    def toggle_rag_mode(self, state):
+        val = "lightblue" if state else "#f0f0f0"
+        self.file_mode = DialogMode.ExistingFolder.value if state else DialogMode.ExistingFile.value
+        state = "Enabled" if state else "Disabled"
+        self.options_menu.setStyleSheet(f"background-color: {val}")
+        self.status_bar.showMessage(f"RAG Mode: {state}", 2000)
 
     @pyqtSlot(str)
     def handle_user_message(self, message):
         """
-
+        This slot method adds user-assistant conversations to the chat area
         :param message:
         :return:
         """
@@ -377,7 +413,7 @@ class MainWindow(QMainWindow):
         QWidget::item { selection-color: #4CAF50 }
         """
         )
-        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setFileMode(self.file_mode if not None else DialogMode.ExistingFile)
         if dialog.exec_():  # Start the dialog box
             file_name = dialog.selectedUrls()[0]
             if file_name:
