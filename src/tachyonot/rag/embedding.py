@@ -69,7 +69,7 @@ class LLamaCPPEmbedding:
         ]
         embed_text = []
         for document_path in document_paths:
-            embed_text.extend(self.embed_file(document_path))
+            embed_text.extend(self.embed_file(document_path)[0])
         return embed_text
 
     def _split_text(self, text):
