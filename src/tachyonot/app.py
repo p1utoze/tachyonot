@@ -1,4 +1,5 @@
 import sys
+import traceback
 from .models.llama import SimaticLLM
 from .models.whipser import VoiceTranscriber
 from .utils.config import whipser_path
@@ -359,7 +360,9 @@ class MainWindow(QMainWindow):
         self.options_menu.setStyleSheet(f"background-color: lightblue")
         self.options_menu.addAction(button_action)
 
+        # Default is RAG-based reasoning on the directory
         self.file_mode = DialogMode.ExistingFolder.value
+        self.file_path = None
 
     def toggle_rag_mode(self, state):
         val = "lightblue" if state else "#f0f0f0"
@@ -418,30 +421,35 @@ class MainWindow(QMainWindow):
             file_name = dialog.selectedUrls()[0]
             if file_name:
                 path = Path(file_name.path())
-                self.create_file_embeds(path)
+                self.create_file_embeds(path, path.is_file())
 
         dialog.destroy()
         QTimer.singleShot(5000, self.reset_status_bar)
 
-    def create_file_embeds(self, file_path: Path) -> None:
+    def create_file_embeds(self, file_path: Path, is_file: bool) -> None:
         """
         Create embeddings from the file and add the documents to Faiss vector store.
         :param file_path: Path to the file selected from the file menu
+        :param is_file: A boolean flag indicating if the path is a file or folder.
         :return:
         """
+        if is_file:
+            self.file_path = file_path
+            self.status_bar.showMessage(f"Using file for context: {file_path.name}")
+            return
         try:
             self.status_bar.setStyleSheet(self.processing_style)
             self.status_bar.showMessage("Processing the document. Please wait...")
             self.chat_widget.upload_button.setEnabled(False)
             QApplication.processEvents()  # Collect signal from blocking events
 
-            self.chat_assistant.store_documents(file_path=str(file_path))
+            self.chat_assistant.store_documents(data_path=str(file_path))
             self.status_bar.setStyleSheet(self.finished_style)
             self.status_bar.showMessage("Document processed successfully!")
             self.chat_widget.upload_button.setEnabled(True)
 
         except BaseException as e:
-            print(e)
+            print(traceback.print_exc())
             self.status_bar.setStyleSheet("background-color: red")
             self.status_bar.showMessage(
                 "Error processing documents: " + str(e), msecs=10000
