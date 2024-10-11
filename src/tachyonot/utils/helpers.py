@@ -66,10 +66,7 @@ def read_xlsx_file(file_path):
     threshold = int(len(df) * 0.9)
     df = df.dropna(axis=1, thresh=threshold)
     df = df.dropna()
-    text = ""
-    for index, row in df.iterrows():
-        text += " ".join([f"{col_name}: {value}" for col_name, value in row.items()]) + "\n"
-    return text
+    return df
 
 def read_file(file_path):
     _, file_extension = os.path.splitext(file_path)

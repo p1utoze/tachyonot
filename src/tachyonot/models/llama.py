@@ -1,11 +1,12 @@
 import os
 from llama_cpp import Llama
 
-from ..utils import config as tconfig
-from ..rag.embedding import LLamaCPPEmbedding
-from ..utils.templates import TEMPLATE
-from ..utils.helpers import set_tiktoken_env
-from ..rag.vectorstore import FaissVectorStore
+from tachyonot.models.agent import Agent
+from tachyonot.utils import config as tconfig
+from tachyonot.rag.embedding import LLamaCPPEmbedding
+from tachyonot.utils.templates import TEMPLATE
+from tachyonot.utils.helpers import set_tiktoken_env, read_xlsx_file
+from tachyonot.rag.vectorstore import FaissVectorStore
 
 import logging
 
@@ -93,7 +94,12 @@ class SimaticLLM:
         final_context = ""
 
         if data_path:
-            final_context, _ = self.embeder.embed_file(data_path)
+            self.df = read_xlsx_file(data_path)
+            agent = Agent(self.df)
+            response = agent.respond(query)
+
+            for word in response.split():
+                yield word + " "
         else:
             results = self.vectorstore.search(query_embedding)
             for context, distance in results:
@@ -116,11 +122,14 @@ class SimaticLLM:
 if __name__ == "__main__":
     chain = SimaticLLM()
     # chain.store_documents("data")
+    query = """
+    A furnace is being is ued to heat a specific set of gas. 
+    Give the logs file which contains data of gas pressure and temperature, what can you comment about the statistics of the gas pressure such as it's details?"  
+    """
     generator = chain.invoke(
-        "What are Drones  and how does it help in Disaster rescue and Disaster Risk Management ("
-        "DRM)?",
+        query,
         stream=True,
-        data_path="data/Report_000.xlsx"
+        data_path="/home/kausthub-kannan/Projects/Tachyonot/data/Report_001.xlsx"
     )
 
     CYAN = "\033[96m"
