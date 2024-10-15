@@ -10,6 +10,7 @@ class Agent:
         # self._initialize_model()
         self._intialize_groq()
         self.df = df
+        self.itr = 3
 
     def _initialize_model(self):
         self.llm = Llama(
@@ -43,7 +44,15 @@ class Agent:
 
     def respond(self, query):
         df = self.df
-        processed_value = eval(self._generate_groq_response(query))
+        try:
+            processed_value = eval(self._generate_groq_response(query))
+        except Exception as e:
+            if self.itr == 0:
+                processed_value = df.describe()
+            else:
+                self.respond(query)
+                self.itr -= 1
+
         response = self.groq.chat.completions.create(
             messages=[
                 {
