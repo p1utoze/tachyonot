@@ -50,7 +50,7 @@ class Agent:
             if self.itr == 0:
                 processed_value = df.describe()
             else:
-                self.respond(query)
+                processed_value = self.respond(query)
                 self.itr -= 1
 
         response = self.groq.chat.completions.create(
