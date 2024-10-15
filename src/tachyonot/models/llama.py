@@ -105,18 +105,18 @@ class SimaticLLM:
             for context, distance in results:
                 final_context += context.text + "\n"
 
-        prompt = TEMPLATE.format(context=final_context, question=query)
+            prompt = TEMPLATE.format(context=final_context, question=query)
 
-        response = self.llm.create_chat_completion(
-            messages=[{"role": "system", "content": prompt}], stream=stream
-        )
+            response = self.llm.create_chat_completion(
+                messages=[{"role": "system", "content": prompt}], stream=stream
+            )
 
-        if stream:
-            for message in response:
-                yield message["choices"][0]["delta"].get("content", "")
+            if stream:
+                for message in response:
+                    yield message["choices"][0]["delta"].get("content", "")
 
-        else:
-            yield response["choices"][0]["message"].get("content", "")
+            else:
+                yield response["choices"][0]["message"].get("content", "")
 
 
 if __name__ == "__main__":

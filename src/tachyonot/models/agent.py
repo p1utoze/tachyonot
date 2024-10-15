@@ -44,7 +44,6 @@ class Agent:
     def respond(self, query):
         df = self.df
         processed_value = eval(self._generate_groq_response(query))
-        print(processed_value)
         response = self.groq.chat.completions.create(
             messages=[
                 {
