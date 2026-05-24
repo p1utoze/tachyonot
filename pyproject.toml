@@ -1,0 +1,98 @@
+# POETRY CONFIGURATION
+[tool.poetry]
+name = "tachyonot"
+version = "3.6.1"
+description = "Official LLM package for Simatic HMI panels and embedded systems"
+authors = ["kausthub-kannan <kausthubkannan961@gmail.com>", "adithya-awati <aditya.n.awati@gmail.com>"]
+include = [
+    {path = "./.tiktoken_cache/*", format=["sdist", "wheel"]}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11.0"
+faiss-cpu = "^1.8.0.post1"
+numpy = "1.26.4"
+textsplitter = "^1.0.3"
+pypdf2 = "^3.0.1"
+python-docx = "^1.1.2"
+pickle4 = "^0.0.1"
+pyyaml = "^6.0.2"
+pydantic = "^2.8.2"
+pywhispercpp = "^1.2.0"
+sounddevice = "^0.5.0"
+rich = "^13.7.1"
+webrtcvad = "^2.0.10"
+chardet = "^5.2.0"
+llama-cpp-python = "0.2.79"
+pyqt5 = "^5.15.11"
+pandas = "1.5.3"
+openpyxl = "^3.1.5"
+groq = "^0.11.0"
+
+[tool.poetry.group.dev.dependencies]
+briefcase = "^0.3.19"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# BRIEFCASE CONFIGURATION
+[tool.briefcase]
+project_name = "Tachyonot"
+bundle = "com.tachyonot"
+version = "3.6.1"
+license = {file = "LICENSE"}
+author = "Kausthub Kannan & Adithya Awati"
+author_email = "kausthubkannan961@gmail.com"
+
+[tool.briefcase.app.tachyonot]
+formal_name = "Tachyonot"
+description = "Official LLM package for Simatic HMI panels and embedded systems"
+long_description = """Tachyonot is designed to LLMs efficently on low power embedded systems such as HMI panels.
+ It is designed to be fast and efficient, and is built on top of the Llama C++ library."""
+sources = ["src/tachyonot"]
+test_sources = ["tests"]
+requires = [
+    "numpy==1.26.4",
+    "textsplitter==1.0.3",
+    "pypdf2==3.0.1",
+    "python-docx==1.1.2",
+    "pickle4==0.0.1",
+    "pyyaml==6.0.2",
+    "pydantic==2.8.2",
+    "sounddevice==0.5.0",
+    "rich==13.7.1",
+    "webrtcvad==2.0.10",
+    "chardet==5.2.0",
+    "pyqt5==5.15.11",
+    "openpyxl==3.1.5",
+#    "./wheels/faiss-1.8.0-py2.py3-none-any.whl",
+#    "./wheels/pywhispercpp-1.2.0-cp39-cp39-linux_x86_64.whl",
+    "faiss-cpu==1.8.0.post1",
+    "pywhispercpp==1.2.0",
+    "llama-cpp-python==0.2.79",
+    "pandas",
+    "groq==0.11.0"
+]
+
+[tool.briefcase.app.tachyonot.linux]
+system_requires = [
+    "cmake",
+    "liblapack-dev",
+    "git"
+]
+system_runtime_requires = [
+    "libportaudio2",
+    "libegl1",
+    "libopenblas-dev",
+    "ffmpeg"
+]
+
+# NOTE: CMAKE_ARGS are passed to handle CPU flags issue for the build
+dockerfile_extra_content = """
+USER root
+ENV CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS -DLLAMA_NATIVE=OFF"
+ENV CFLAGS="-march=goldmont"
+ENV CXXFLAGS="-march=goldmont"
+RUN pip install cmake==3.24.0 numpy==1.26.4
+ENV FAISS_OPT_LEVEL=generic
+"""
