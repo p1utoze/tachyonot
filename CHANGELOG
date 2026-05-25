@@ -1,5 +1,12 @@
 # Tachyonot Release Notes
 
+## 3.6.1 (24 May 2026)
+This project is revived after two years with a refreshed public release.
+- Project code is now open and publicly available.
+- Updated packaging, dependency management, and install flow.
+- Refreshed architecture for embedded LLM support on low-power systems.
+- Improved UI, audio, and RAG workflows for HMI copilot scenarios.
+
 ## 3.5.3 (13 September 2024)
 This release includes the following new features:
 - Support for LLMs on embedded systems with low power requirements such as:
