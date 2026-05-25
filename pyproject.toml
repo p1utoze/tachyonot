@@ -4,6 +4,7 @@ name = "tachyonot"
 version = "3.6.1"
 description = "Official LLM package for Simatic HMI panels and embedded systems"
 authors = ["kausthub-kannan <kausthubkannan961@gmail.com>", "adithya-awati <aditya.n.awati@gmail.com>"]
+license = {file = "LICENSE"}
 include = [
     {path = "./.tiktoken_cache/*", format=["sdist", "wheel"]}]
 
