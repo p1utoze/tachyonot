@@ -37,7 +37,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install briefcase
-        run: pip install briefcase
+        run: pip install briefcase>=0.3.19
 
       - name: Perform packaging
         run: |
