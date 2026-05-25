@@ -1,12 +1,10 @@
 name: Check and packaging
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
-  pull_request:
-    branches:
-      - main
 
 jobs:
   formatting-check:
